@@ -17,8 +17,7 @@
         "label": "Paper Index",
         "href": "https://github.com/onehouwong/Cellular-Security-Papers"
       }
-    ],
-    "primary": null
+    ]
   },
   "footer": {
     "socials": {
@@ -28,7 +27,7 @@
   "navigation": {
     "groups": [
       {
-        "group": "",
+        "group": "Overview",
         "expanded": true,
         "pages": [
           "introduction",
