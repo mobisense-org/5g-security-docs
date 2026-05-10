@@ -1,0 +1,55 @@
+---
+title: "C-RNTI Tracking"
+description: "Passive location tracking by monitoring the unencrypted C-RNTI identifier in 5G NR RRC signaling, requiring no transmission hardware."
+---
+
+# C-RNTI Tracking
+
+## Overview
+
+The Cell Radio Network Temporary Identifier (C-RNTI) is assigned to each UE during RRC connection setup and used in all subsequent scheduling on PDCCH. Because RRC signaling is **not ciphered** at the time of C-RNTI assignment, and the C-RNTI appears in cleartext in every DCI message, a passive observer can track a UE's presence and activity within a cell.
+
+**Ease of execution: 5/5** -- purely passive, no transmission, no extra hardware beyond a receive SDR.
+
+## Key Paper
+
+- **Reference:** arXiv 2409.17700, September 2024
+- **Finding:** C-RNTI values are visible in cleartext in 5G NR, enabling persistent tracking
+
+## How It Works
+
+1. The attacker deploys a passive SDR receiver tuned to the target 5G NR cell.
+2. The receiver decodes PDCCH (DCI messages) which contain the C-RNTI of scheduled UEs.
+3. By correlating C-RNTI values over time, the attacker can:
+   - Detect when a specific UE is present in the cell
+   - Track UE mobility across time (C-RNTI persistence within a cell)
+   - Estimate activity patterns (scheduling frequency correlates with data usage)
+4. Cross-cell tracking is possible if the attacker deploys receivers at multiple cells and correlates handover timing.
+
+## Tools
+
+- **5GSniffer:** [spritelab/5GSniffer](https://github.com/spritelab/5GSniffer) -- passive 5G NR downlink decoder
+- **NR-Scope:** [PrincetonUniversity/NR-Scope](https://github.com/PrincetonUniversity/NR-Scope) -- 5G NR monitoring tool
+
+Both tools can decode PDCCH and extract C-RNTI values from live 5G NR signals.
+
+## Hardware Requirements
+
+| Component | Details |
+|-----------|---------|
+| SDR | USRP B210 (receive only) |
+| Extra hardware | **None** -- no PA, no transmission capability needed |
+| Software | 5GSniffer or NR-Scope |
+| Antenna | Standard receive antenna for target band |
+
+## Limitations
+
+- C-RNTI is cell-specific and changes on handover (cross-cell tracking requires correlation heuristics)
+- C-RNTI may be reassigned when the UE re-enters RRC_CONNECTED from RRC_IDLE
+- Mapping C-RNTI to a real identity requires additional side information (e.g., timing correlation with known events)
+
+## Mitigations
+
+- C-RNTI randomization and frequent rotation (limited by 3GPP spec constraints)
+- Encrypting DCI (not in current 3GPP specifications)
+- Reducing C-RNTI lifetime through aggressive RRC release timers

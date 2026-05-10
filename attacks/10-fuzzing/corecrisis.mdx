@@ -1,0 +1,45 @@
+---
+title: "CoreCrisis"
+description: "Threat-guided, context-aware iterative learning and fuzzing of 5G core networks — 8 CVEs, 16 findings, 11 already patched upstream."
+---
+
+## Summary
+
+CoreCrisis is a stateful black-box fuzzing framework for 5G core (5GC) implementations. Unlike prior cellular-core analysis efforts that rely on hand-written, static test inputs and only catch logical errors, CoreCrisis dynamically (1) learns a finite-state-machine model of the target 5GC using benign inputs, then (2) uses that learned FSM to drive state-aware mutations into under-explored states. Across Open5GS, free5GC, and OpenAirInterface CN, it found 3 logical-violation classes (auth bypass, billing fraud), 7 protocol deviations, and 13 crashing bugs — 8 CVEs assigned, 11 of 16 issues already merged upstream.
+
+## Paper
+
+| Field | Details |
+|---|---|
+| **Authors** | Yilu Dong et al., Penn State (SyNSec) |
+| **Venue** | USENIX Security 2025 |
+| **Code** | [github.com/SyNSec-den/CoreCrisis](https://github.com/SyNSec-den/CoreCrisis) |
+| **Targets** | Open5GS, free5GC, OAI-CN |
+| **CVEs** | 8 assigned |
+| **Ease of Replication** | 4/5 |
+
+## Attack Mechanism
+
+1. **State-machine learning phase:** CoreCrisis sends only well-formed NAS/NGAP traffic and observes the 5GC's responses to build a finite-state-machine approximation of its implementation behavior — including states the 3GPP spec doesn't prescribe.
+2. **Threat-guided fuzzing phase:** Using the learned FSM as a coverage map, the fuzzer steers inputs toward under-visited states. Mutations are *context-aware*: they respect protocol structure but selectively violate values, ordering, or session context.
+3. **Oracle:** Crashes, security-property violations (e.g. authenticated session without prior AKA), and unexpected billing-related state transitions are flagged automatically.
+
+## Why It Matters
+
+- **First learning-based stateful 5GC fuzzer:** Previous core fuzzers (LTEFuzz, DoLTEst, 5GReasoner) relied on manually authored state models. CoreCrisis is the first to *infer* the model.
+- **Bugs that older tools missed:** Several findings depend on multi-step session context that single-message fuzzers cannot reach.
+- **Reproducible:** Open-source, runs against open-source 5GCs, no SDR required.
+
+## Reproduction
+
+1. Clone [CoreCrisis](https://github.com/SyNSec-den/CoreCrisis) and target 5GC (Open5GS recommended for first run).
+2. Run the FSM-learning module against a clean 5GC instance.
+3. Launch the fuzzing module pointing at the learned model.
+4. Triage crashes with ASan; correlate logical violations against the auth/session log.
+
+No SDR or radio is needed — CoreCrisis interfaces with the 5GC over its standard SBI/NGAP entry points.
+
+## References
+
+- Y. Dong et al., "CoreCrisis: Threat-Guided and Context-Aware Iterative Learning and Fuzzing of 5G Core Networks," USENIX Security 2025. [PDF](https://www.usenix.org/system/files/usenixsecurity25-dong-yilu.pdf)
+- Code: [github.com/SyNSec-den/CoreCrisis](https://github.com/SyNSec-den/CoreCrisis)

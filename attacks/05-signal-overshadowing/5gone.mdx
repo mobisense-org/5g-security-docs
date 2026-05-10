@@ -1,0 +1,37 @@
+---
+title: "5Gone -- Uplink Overshadowing (2026)"
+description: "First demonstrated uplink signal overshadowing attack on 5G Standalone, capable of targeting 64 UEs in parallel across a 100 MHz cell with sub-500-microsecond end-to-end latency."
+---
+
+## Summary
+
+5Gone is a landmark attack from February 2026 that demonstrates the first uplink signal overshadowing on 5G Standalone networks. Unlike all prior overshadowing work that targeted downlink broadcasts, 5Gone injects crafted uplink signals that impersonate legitimate UE transmissions toward the gNB. It scales to 64 UEs in parallel across a full 100 MHz NR cell with end-to-end latency under 500 microseconds.
+
+## Paper
+
+| Field | Details |
+|---|---|
+| **Authors** | Simon Erni, Matus Kotuliak, Patrick Roeschlin, Aidan Baker, Srdjan Capkun |
+| **Affiliations** | ETH Zurich, University of Oxford |
+| **Reference** | arXiv:2602.10272 |
+| **Date** | February 2026 |
+| **Direction** | Uplink (first of its kind for 5G) |
+| **Scale** | 64 UEs parallel, 100 MHz cell |
+| **Latency** | Under 500 us end-to-end |
+| **Ease of Replication** | 3/5 |
+
+## Attack Mechanism
+
+5Gone exploits the fact that the gNB schedules uplink transmissions on known time-frequency resources via DCI grants. The attacker monitors downlink DCI to learn exactly when and where each target UE will transmit, then injects overshadowing uplink symbols on those precise PUSCH resources. Because the attacker is physically closer to the gNB than the legitimate UE (or uses sufficient PA gain), the gNB decodes the attacker's payload instead. This enables message injection, denial of service, or manipulation of uplink NAS/RRC signaling for up to 64 UEs simultaneously.
+
+## Replication Notes
+
+- **Original Hardware**: The paper uses a USRP X310 with band 78 (n78) and band 8 (n8) power amplifiers.
+- **Alternative Hardware**: Partially replicable with a USRP B210 combined with an Ettus N310, though the B210's limited bandwidth (56 MHz) restricts operation to narrower cells.
+- **Timing**: The sub-500 us E2E constraint demands a high-performance host (the paper uses FPGA-assisted processing on the X310) and minimal USB/network latency in the SDR chain.
+- **Code**: Not publicly released as of the paper's publication.
+- **Scale Limitation**: Achieving the full 64-UE parallel capability requires the X310's wider instantaneous bandwidth and FPGA pipeline.
+
+## References
+
+- S. Erni, M. Kotuliak, P. Roeschlin, A. Baker, and S. Capkun, "5Gone: 5G Uplink Overshadowing," arXiv:2602.10272, February 2026.

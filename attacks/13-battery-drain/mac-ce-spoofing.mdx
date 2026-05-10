@@ -1,0 +1,74 @@
+---
+title: 'MAC CE Spoofing'
+description: 'Spoofing MAC Control Elements to prevent UE from entering DRX sleep cycles, causing continuous battery drain.'
+---
+
+<Info>
+**Ease: 2/5** | **Layer: MAC** | **Replicable: Partial** | **Extra HW: USRP B210**
+</Info>
+
+## Paper
+
+| Field | Value |
+|---|---|
+| **Title** | Various MAC-layer security analyses |
+| **Authors** | Various |
+| **Venue** | Various |
+| **Date** | 2021+ |
+| **Source Code** | -- |
+| **Ease** | 2/5 |
+| **Layer** | MAC |
+| **Extra HW** | USRP B210 |
+
+## Attack Mechanism
+
+MAC Control Elements (MAC CEs) are in-band signaling messages carried in the MAC PDU header. They control critical UE behaviors including DRX (Discontinuous Reception), timing advance, power control, and bandwidth part switching. MAC CEs are not individually integrity-protected.
+
+```
+1. Identify target UE's C-RNTI and DRX configuration
+   (from SIB1 or RRC Reconfiguration, decoded passively)
+2. Craft spoofed MAC CE via signal overshadowing:
+   Method A: DRX Command manipulation
+     - Overshadow the MAC CE that triggers DRX On Duration
+     - UE never enters DRX sleep → continuous monitoring
+   Method B: Timing Advance Command
+     - Send invalid TA command → UE loses UL sync
+     - UE must re-establish → high power consumption
+   Method C: Bandwidth Part Indicator
+     - Force UE to active BWP with wide bandwidth
+     - Wider BWP = higher power consumption
+3. UE processes the spoofed MAC CE as legitimate
+4. Result: Elevated power consumption, battery drain
+```
+
+### DRX Power Savings (Normal vs. Attack)
+```
+Normal DRX (10ms on, 40ms off):
+  Active fraction: 20% → power savings ~80%
+
+Attack (DRX disabled or always on):
+  Active fraction: 100% → no power savings
+
+Additional: Wide BWP active → even higher per-slot power
+```
+
+<Warning>
+MAC CE spoofing requires precise OFDM-level signal injection (similar to SigOver). It is more complex than RRC-level attacks but harder for the network to detect because MAC CEs are transient.
+</Warning>
+
+## Replication
+
+| Component | Requirement |
+|---|---|
+| SDR | USRP B210 |
+| Software | SigOver-style injector adapted for MAC PDU injection |
+| Timing | Must decode target's PDCCH scheduling to inject at correct time |
+| Knowledge | DRX configuration from SIB1 / RRC Reconfiguration |
+
+<Tip>
+DRX parameters are visible in the RRC Reconfiguration message, which can be captured during initial connection setup (pre-encryption). Use 5GSniffer to decode these parameters first.
+</Tip>
+
+## References
+1. 3GPP TS 38.321 (MAC specification, MAC CE definitions).
+2. Various MAC-layer security analyses (2021-2025).

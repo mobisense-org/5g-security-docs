@@ -1,0 +1,50 @@
+---
+title: "CITesting (Context Integrity)"
+description: "Systematic testing for context-integrity violations in cellular core networks — a new bug class targeting AMF/SMF state confusion."
+---
+
+## Summary
+
+*CITesting: Systematic Testing of Context Integrity Violations in Cellular Core Networks* (CCS 2025) introduces **context integrity** as a security property class for 5G cores. A context-integrity violation occurs when a Network Function believes it is operating on behalf of subscriber/session/slice context X but is actually operating on Y — leading to mis-attributed actions, cross-subscriber leaks, or charging anomalies.
+
+Where classic protocol fuzzers look for crashes, CITesting looks for *semantic* violations: the NF responds, no crash, no error — but the action was performed against the wrong context.
+
+## Paper
+
+| Field | Details |
+|---|---|
+| **Venue** | ACM CCS 2025 |
+| **Targets** | Commercial and open-source 5G cores |
+| **Class** | Logic / context confusion |
+| **Ease** | 3/5 — requires SBA test harness |
+
+## Attack Mechanism
+
+1. **Define context invariants:** For each NF service operation, formalize which subscriber/session/slice context the action *should* be tied to.
+2. **Generate test cases:** Construct sequences that legitimately establish multiple parallel contexts, then issue a request whose intended context is ambiguous (e.g. mismatched headers, stale session pointers, conflicting routing keys).
+3. **Detect violations:** Compare observed effects (which subscriber's data changed, which session got the message) against the formal invariant.
+
+The framework is fully automated against SBI/NGAP entry points.
+
+## Findings
+
+The paper reports multiple context-integrity bugs in real 5GCs, including:
+
+- Session-management requests applied to the wrong PDU session.
+- Charging events attributed to the wrong subscriber.
+- Slice-scoped operations leaking across slice boundaries.
+
+## Why It Matters
+
+- **New bug class:** Most 5GC research focuses on crashes (RANsacked, CoreCrisis-DoS) or auth bypass. Context-integrity bugs are subtler — they don't crash anything but corrupt the operator's view of who did what.
+- **Billing / regulatory exposure:** A context-integrity bug can cause a real customer to be charged for someone else's traffic, or expose lawful-intercept boundaries.
+- **Hard to fix retroactively:** Many of the violations come from optional headers and routing keys that are spec-ambiguous.
+
+## How It Relates to Other Attacks
+
+- Complements [Cross-Service Token](/attacks/14-20-specialized/cross-service-token): that work targets authorization, this targets context.
+- Pairs with [CoreCrisis](/attacks/10-fuzzing/corecrisis): together they cover crash-bugs (CoreCrisis), auth-bugs (Cross-Service Token), and context-bugs (CITesting) in the SBA.
+
+## References
+
+- "CITesting: Systematic Testing of Context Integrity Violations in Cellular Core Networks," ACM CCS 2025.

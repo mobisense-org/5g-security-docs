@@ -1,0 +1,22 @@
+---
+title: 'Overview'
+description: 'Identifying and tracking subscribers in 5G networks (2023+ papers)'
+---
+
+In 5G, the IMSI (now SUPI) is encrypted as SUCI using ECIES. These attacks bypass or work around that protection.
+
+## Attacks (2023+)
+
+<CardGroup cols={2}>
+  <Card title="Passive IMSI Sniffing (NSA)" icon="ear-listen" href="/attacks/01-imsi-catching/passive-sniffing">
+    5G-NSA exposes IMSI on LTE anchor. Ease: 5/5. No extra HW.
+  </Card>
+  <Card title="SNI5GECT Uplink Extract" icon="arrow-up" href="/attacks/01-imsi-catching/sni5gect-uplink">
+    Sniff pre-auth uplink for SUPI. USENIX '25. GitHub available. Ease: 4/5.
+  </Card>
+</CardGroup>
+
+| Attack | Paper | Date | Code | Ease |
+|---|---|---|---|---|
+| Passive IMSI (NSA) | "IMSI Catchers in the wild" | 2023 | [LTESniffer](https://github.com/SysSec-KAIST/LTESniffer) | 5/5 |
+| Uplink SUPI extract | Luo et al. "SNI5GECT" | Aug 2025 | [Sni5Gect](https://github.com/asset-group/Sni5Gect-5GNR-sniffing-and-exploitation) | 4/5 |

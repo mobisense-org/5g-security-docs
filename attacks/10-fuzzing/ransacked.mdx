@@ -1,0 +1,67 @@
+---
+title: "RANsacked"
+description: "The largest 5G vulnerability discovery campaign to date, finding 119 vulnerabilities and 97 CVEs across seven open-source and commercial 5G implementations."
+---
+
+# RANsacked
+
+## Overview
+
+RANsacked is the most comprehensive 5G protocol fuzzing study published to date. Using the custom ASNFuzzGen tool, the researchers systematically fuzzed NAS, RRC, and NGAP message parsers across seven 5G implementations, uncovering 119 memory-safety vulnerabilities resulting in 97 assigned CVEs.
+
+**Ease of execution: 4/5** -- the fuzzing tools are available and targets are open-source.
+
+## Key Paper
+
+- **Authors:** Bennett et al., University of Florida
+- **Venue:** ACM CCS, November 2024
+- **PDF:** Available at nathanielbennett.com
+
+## Affected Implementations
+
+| Implementation | Type | Vulnerabilities Found |
+|---------------|------|----------------------|
+| srsRAN | Open-source RAN + Core | Multiple |
+| Open5GS | Open-source Core | Multiple |
+| OpenAirInterface (OAI) | Open-source RAN + Core | Multiple |
+| Magma | Open-source Core (Meta) | Multiple |
+| Athonet | Commercial Core | Multiple |
+| SD-Core (ONF) | Open-source Core | Multiple |
+| NextEPC | Open-source Core | Multiple |
+
+**Total: 119 vulnerabilities, 97 CVEs** across all seven stacks.
+
+## ASNFuzzGen Tool
+
+The key contribution is **ASNFuzzGen**, which automatically generates protocol-aware fuzzers from 3GPP ASN.1 specifications:
+
+1. Parse the ASN.1 definitions for NAS, RRC, S1AP, or NGAP messages.
+2. Generate structure-aware mutators that produce syntactically plausible but semantically invalid messages.
+3. Link against the target implementation's message parser.
+4. Run with coverage-guided fuzzing (e.g., AFL++, libFuzzer).
+
+This approach is far more effective than blind byte-level fuzzing because it respects the ASN.1 PER encoding structure while mutating field values.
+
+## Vulnerability Types
+
+- Null-pointer dereferences (crash)
+- Buffer overflows (potential RCE)
+- Heap use-after-free
+- Stack buffer overflows
+- Integer overflows in length fields
+- Assertion failures
+
+## Impact
+
+- **Single-packet AMF crash** -- one malformed NAS message can take down the entire core (see [AMF Crash](/attacks/07-dos/amf-crash))
+- **gNB crashes** -- malformed RRC messages crash the base station
+- **Persistent DoS** -- auto-restart + re-crash loops
+
+## Reproduction
+
+1. Clone the target implementation (e.g., Open5GS, srsRAN)
+2. Apply ASNFuzzGen to generate fuzz harnesses
+3. Run with AFL++ or libFuzzer
+4. Triage crashes with AddressSanitizer (ASan)
+
+No SDR hardware is needed -- all fuzzing runs against software message parsers.

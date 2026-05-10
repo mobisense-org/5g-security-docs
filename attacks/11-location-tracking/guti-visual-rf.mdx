@@ -1,0 +1,44 @@
+---
+title: "GUTI Visual-RF Correlation"
+description: "Passive multi-target deanonymization by fusing a video feed with RF traces — surveillance without ever decrypting anything."
+---
+
+## Summary
+
+*Passive Multi-Target GUTI Identification via Visual-RF Correlation in LTE Networks* (NDSS 2026) is a tracking attack that pairs a camera feed with a passive RF sniffer. Because GUTIs (and their 5G equivalent 5G-GUTI) are temporary identifiers that the network reassigns, classical IMSI-catcher tracking breaks across reallocations. This paper sidesteps the problem entirely: by correlating *visible* events (a person walking past a doorway, a car passing) with *RF* events (a paging response, a scheduling pattern, a periodic registration), the attacker resolves which GUTI belongs to which physical target — across multiple targets simultaneously.
+
+## Paper
+
+| Field | Details |
+|---|---|
+| **Venue** | NDSS 2026 |
+| **Mode** | Fully passive (no transmission) |
+| **Hardware** | RF sniffer (e.g. LTESniffer / 5GSniffer-class) + camera |
+| **Targets** | Any subscribers in coverage of the monitored cell + camera FoV |
+| **Ease** | 4/5 — components exist; novelty is the fusion algorithm |
+
+## Attack Mechanism
+
+1. **Passive RF capture:** Sniff LTE/5G control channels, extract per-RNTI scheduling, paging events, and registration timing.
+2. **Visual capture:** Record video of a chosen physical area.
+3. **Event correlation:** Cross-correlate RF events (paging arrival, uplink burst pattern, periodic registration) with visual events (person enters, leaves, takes a call). Repeated coincidences across many windows pin a specific GUTI to a specific physical target.
+4. **Multi-target tracking:** Algorithm scales to multiple simultaneous targets in the same camera frame.
+
+## Why It's Attractive
+
+- **Pure passive:** No active radio. Undetectable by standard FBS detectors and operator-side anomaly systems.
+- **Defeats GUTI rotation:** Every time the network reassigns a temporary identifier, the visual track stays continuous and re-identifies the new GUTI.
+- **Cross-modal fusion is the new idea:** RF-only tracking and camera-only tracking are both well-studied; combining them removes the weaknesses of each.
+
+## How It Relates to Other Attacks
+
+- Complements [C-RNTI tracking](/attacks/11-location-tracking/crnti-tracking) — that work tracks within a cell using radio fingerprints; this work pins a radio identity to a *real-world* identity.
+- More stealthy than [IMSI catchers](/attacks/01-imsi-catching/overview) — no transmission, no protocol manipulation.
+
+## Defenses (limited)
+
+GUTI rotation alone does **not** defeat this attack. Effective mitigations would have to either (a) eliminate timing side-channels in paging/scheduling or (b) randomize control-channel timing — both expensive. The paper itself is largely an existence proof rather than a defense paper.
+
+## References
+
+- "Passive Multi-Target GUTI Identification via Visual-RF Correlation in LTE Networks," NDSS 2026. See the [NDSS 2026 accepted papers list](https://www.ndss-symposium.org/ndss2026/accepted-papers/).

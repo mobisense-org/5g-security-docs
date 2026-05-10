@@ -1,0 +1,44 @@
+---
+title: 'Overview'
+description: 'Fame Rank #2 — Rogue gNB attacks including SIB1 spoofing, MITM relay, and cell reselection forcing.'
+---
+
+## Why It's #2
+
+Fake base stations (rogue gNBs / IMSI catchers) remain the backbone of active cellular attacks. In 5G NR, the lack of authentication on broadcast system information (MIB/SIB1) and the pre-authentication RRC layer means a convincing fake cell can still lure UEs. The attacker either spoofs broadcast information to redirect victims or operates a full MITM relay between the UE and a legitimate network.
+
+## Sub-Attacks
+
+<CardGroup cols={2}>
+  <Card title="SIB1 Spoofing" icon="tower-broadcast" href="/attacks/02-fake-base-station/sib1-spoofing">
+    Broadcast spoofed SIB1 to redirect UEs. No crypto protection on SIBs.
+  </Card>
+  <Card title="MITM Relay gNB" icon="shuffle" href="/attacks/02-fake-base-station/mitm-relay">
+    Full man-in-the-middle relay using dual USRP B210. Intercepts and forwards.
+  </Card>
+  <Card title="Cell Reselection Forcing" icon="arrow-right-arrow-left" href="/attacks/02-fake-base-station/cell-reselection">
+    Force UE to camp on rogue cell via power advantage or SIB manipulation.
+  </Card>
+</CardGroup>
+
+## Summary Table
+
+| Sub-Attack | Paper | Venue | Date | Code | Ease | Layer | Extra HW |
+|---|---|---|---|---|---|---|---|
+| SIB1 Spoofing | "The attacks aren't alright" | CSET '24 | Aug 2024 | -- | 3/5 | PHY/RRC | PA, USRP B210 |
+| MITM Relay gNB | "Unprotected 4G/5G Control Procedures" | arXiv 2403.06717 | Mar 2024 | -- | 2/5 | RRC/NAS | 2x USRP B210, PA |
+| Cell Reselection | "The attacks aren't alright" | CSET '24 | Aug 2024 | -- | 3/5 | RRC | PA, USRP B210 |
+
+## Key References
+
+1. Ludant, Music, Noubir. **"The attacks aren't alright: Large-scale assessment of 5G attacks in the real world."** CSET '24, August 2024.
+2. Bitsikas et al. **"Unprotected 4G/5G Control Procedures at Low Layers."** arXiv:2403.06717, March 2024.
+
+## 5G vs 4G: What Changed
+
+| Aspect | 4G (LTE) | 5G (NR) |
+|---|---|---|
+| SIB Authentication | None | None (still unprotected) |
+| Identity Protection | IMSI in cleartext | SUCI encryption (ECIES) |
+| Full MITM | Easy with srsLTE | Harder — requires 5G NR stack, 2x SDR |
+| Cell Reselection | Well-known | Same principles apply to NR |

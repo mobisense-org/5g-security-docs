@@ -1,0 +1,57 @@
+---
+title: "5GBaseChecker"
+description: "A systematic baseband security analysis framework that discovered 13 exploitable zero-day vulnerabilities across 17 commercial 5G basebands."
+---
+
+# 5GBaseChecker
+
+## Overview
+
+5GBaseChecker is a three-component framework for systematically testing the security of commercial 5G baseband processors. It discovered 13 exploitable zero-day vulnerabilities affecting 17 commercial basebands from major chipset vendors.
+
+**Ease of execution: 3/5** -- requires commercial phones/modems and the testing framework, but no hardware modification.
+
+## Key Paper
+
+- **Authors:** Tu et al., Penn State University
+- **Venue:** USENIX Security, August 2024
+- **GitHub:** [SyNSec-den/5GBaseChecker](https://github.com/SyNSec-den/5GBaseChecker)
+
+## Three Components
+
+### 1. StateSynth
+Automatically extracts the NAS state machine from baseband firmware or black-box observation. Builds a model of which messages the baseband accepts in each protocol state.
+
+### 2. DevScan
+Scans and fingerprints commercial 5G devices to identify baseband chipset, firmware version, and supported features. Creates a device inventory for systematic testing.
+
+### 3. DevLyzer
+Generates and sends test sequences (invalid messages, out-of-order messages, missing mandatory fields) based on the state model. Monitors the baseband's response for security violations.
+
+## Results
+
+- **17 commercial basebands tested** from vendors including Qualcomm, Samsung, MediaTek, and others
+- **13 exploitable zero-day vulnerabilities** discovered
+- Vulnerability types include: authentication bypass, denial of service, downgrade attacks, and information leakage
+- Responsible disclosure conducted with all affected vendors
+
+## Hardware Requirements
+
+| Component | Details |
+|-----------|---------|
+| SDR | USRP B210 (to run a controllable test gNB) |
+| Software | srsRAN gNB + Open5GS core + 5GBaseChecker framework |
+| Target devices | Commercial 5G phones/modems for testing |
+
+## Getting Started
+
+```bash
+git clone https://github.com/SyNSec-den/5GBaseChecker
+# Follow setup instructions for srsRAN + Open5GS testbed
+# Connect target commercial UE
+# Run StateSynth, DevScan, then DevLyzer
+```
+
+## Impact
+
+The findings demonstrate that commercial baseband implementations still contain fundamental NAS-layer security flaws despite years of 3GPP security analysis. Many of the zero-days enable practical attacks (downgrade, DoS) against real consumer devices.

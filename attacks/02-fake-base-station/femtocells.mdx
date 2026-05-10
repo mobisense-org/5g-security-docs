@@ -1,0 +1,42 @@
+---
+title: "Femtocell Field Study (Small Cell, Big Risk)"
+description: "First in-the-wild security audit of carrier-deployed 4G LTE femtocells — most attractive 'real-deployment' attack paper of NDSS 2026."
+---
+
+## Summary
+
+*Small Cell, Big Risk: A Security Assessment of 4G LTE Femtocells in the Wild* (NDSS 2026) is a field study of *deployed* carrier-grade femtocells — the small home/enterprise cells that operators ship to customers as Wi-Fi-style boxes plugging into a residential ISP. Unlike most fake-base-station research, which builds attack tooling in the lab, this paper audits gear that is already in homes and offices.
+
+The attractive part isn't a single new exploit — it's that real, shipping infrastructure has the kind of weaknesses that academic threat models usually assume away.
+
+## Paper
+
+| Field | Details |
+|---|---|
+| **Authors** | (NDSS 2026 — see proceedings) |
+| **Venue** | NDSS 2026 |
+| **Targets** | Multiple commercial carrier-deployed LTE femtocells |
+| **Threat Model** | Customer-side attacker (legitimate physical access to the box) plus over-the-air attacker |
+
+## What They Found (high level)
+
+The paper documents weaknesses in deployed femtocells across several axes:
+
+- **Backhaul authentication gaps:** Some femtocells authenticate to the operator core with credentials that are extractable from the device (firmware images, secure-element bypass, debug interfaces).
+- **Broadcast manipulation:** Cell selection parameters (priorities, neighbor lists) can be tampered with to influence which UEs camp on the femtocell vs. macro coverage.
+- **Privileged position relative to UEs:** A compromised femtocell sits inside the operator's trust boundary — it can observe, redirect, or selectively block subscriber traffic for any UE camping on it.
+
+## Why It's Attractive
+
+- **Real deployments, not lab gear:** The attack surface here is something carriers actually ship today. Most academic FBS papers stand up an attacker gNB; this paper turns *legitimate* gNBs into attacker-controlled ones.
+- **Bridges air-interface and supply-chain threats:** The femtocell is both a radio and a backhaul-attached IP device. Compromise crosses both worlds.
+- **Relevant to private 5G:** Enterprise / private-network deployments rely on the same small-cell architecture. Findings transfer directly.
+
+## How It Relates to Other Attacks Here
+
+- A compromised femtocell is the strongest possible position for [SIB1 spoofing](/attacks/02-fake-base-station/sib1-spoofing), [cell reselection](/attacks/02-fake-base-station/cell-reselection), and [downgrade](/attacks/03-downgrade/bidding-down) — because it is an *authentic* cell from the UE's perspective.
+- Backhaul-side findings overlap with [GTP tunneling](/attacks/14-20-specialized/gtp-tunneling) attacks.
+
+## References
+
+- "Small Cell, Big Risk: A Security Assessment of 4G LTE Femtocells in the Wild," NDSS 2026. See the [NDSS 2026 accepted papers list](https://www.ndss-symposium.org/ndss2026/accepted-papers/).

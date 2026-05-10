@@ -1,0 +1,63 @@
+---
+title: "Open5GS Vulnerabilities"
+description: "Known vulnerabilities in Open5GS including missing TLS on SBI, absent rate-limiting, and API injection flaws. A practical target for 5G core pentesting."
+---
+
+# Open5GS Vulnerabilities
+
+## Overview
+
+Open5GS is the most widely deployed open-source 5G core network, used extensively in research labs and small-scale deployments. Its popularity makes it a prime target for security research, and multiple vulnerability classes have been identified.
+
+**Ease of execution: 4/5** -- vulnerabilities are in software, testable on any machine running Open5GS.
+
+## Key Reference
+
+- **Source:** MDPI, January 2024
+- **Focus:** SBI security, API hardening, and access control gaps
+
+## Vulnerability Classes
+
+### Missing TLS on SBI (Service-Based Interface)
+By default, Open5GS NF-to-NF communication over the SBI does not enforce TLS. This means:
+- Traffic between AMF, SMF, UDM, AUSF, etc. is in plaintext
+- An attacker on the SBI network can intercept subscriber data, authentication vectors, and session keys
+- NF impersonation is trivial without mTLS
+
+### No Rate-Limiting
+Open5GS does not implement rate-limiting on NAS message processing or SBI API calls:
+- Registration request floods can overwhelm the AMF
+- Repeated PDU session requests exhaust SMF resources
+- SBI API endpoints are vulnerable to HTTP flood attacks
+
+### API Injection
+REST API endpoints on the SBI are vulnerable to injection attacks:
+- Malformed JSON payloads can cause unexpected behavior
+- Missing input validation on subscriber data APIs
+- Potential for NoSQL injection on the MongoDB backend
+
+## Recent CVEs
+
+| CVE | Description | Date |
+|-----|-------------|------|
+| CVE-2025-15555 | Core NF vulnerability | 2025 |
+| CVE-2026-1737 | SBI-related flaw | 2026 |
+| CVE-2026-4240 | API injection | 2026 |
+
+## Pentest Your Own Core
+
+Open5GS is an ideal target for 5G core security testing:
+
+1. **Deploy** Open5GS via Docker or bare metal
+2. **Scan** SBI endpoints with standard HTTP security tools (Burp Suite, OWASP ZAP)
+3. **Fuzz** NAS message handling using RANsacked's ASNFuzzGen
+4. **Test** TLS enforcement by sniffing SBI traffic with Wireshark
+5. **Verify** rate-limiting by flooding registration requests
+
+## Mitigations
+
+- Enable TLS on all SBI interfaces (`sbi.tls` configuration in Open5GS)
+- Deploy API gateway with rate-limiting in front of SBI endpoints
+- Input validation on all REST API handlers
+- Regular updates to patch known CVEs
+- Network segmentation to isolate SBI from untrusted networks

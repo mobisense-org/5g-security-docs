@@ -1,0 +1,48 @@
+---
+title: "Hidden Paths (Protocol Tunneling & Boundary Bridging)"
+description: "Exploiting tunnel encapsulation (GTP, N3/N9, PFCP) to cross 5G network trust boundaries with weak validation."
+---
+
+## Summary
+
+*Uncovering Hidden Paths in 5G: Exploiting Protocol Tunneling and Network Boundary Bridging* (CCS 2025) shows that the layered tunneling protocols holding a 5G network together — GTP-U, N3 / N9, PFCP — are validated inconsistently across implementations. Attackers with limited access to one segment of the network can bridge into segments they should not reach by riding inside legitimate tunnels.
+
+This generalizes the [GTP-U hijack](/attacks/14-20-specialized/gtp-tunneling) finding ("Invade the Walled Garden", May 2025) into a broader class of tunnel-misuse attacks.
+
+## Paper
+
+| Field | Details |
+|---|---|
+| **Venue** | ACM CCS 2025 |
+| **Targets** | Open5GS, free5GC, OAI, and several commercial cores |
+| **Class** | Tunnel encapsulation / boundary validation |
+| **Ease** | 2/5 — requires a foothold somewhere in transport (backhaul, N3, or peering) |
+
+## Attack Mechanism
+
+The paper documents several "hidden paths," all variations on the same theme:
+
+1. **Outer-vs-inner mismatch:** A packet's outer encapsulation says it belongs to context A, but the inner payload is for context B. Some receivers validate the outer header but route based on the inner — the path crosses a trust boundary undetected.
+2. **PFCP misuse:** PFCP is the SMF↔UPF control protocol; weak authentication / missing source validation on PFCP lets an attacker reachable on the same network steer user traffic.
+3. **N9 cross-PLMN bridging:** In roaming scenarios, weakly validated N9 tunnels create paths between PLMNs that the operators believed were isolated.
+
+## Why It Matters
+
+- **Bridges classes that papers usually treat separately:** GTP, PFCP, and SBA all validated independently; this paper looks at the seams between them.
+- **Real consequence:** Direct user-plane access (read/inject), session steering, and exfil from inside the operator's "walled garden."
+- **Affects roaming:** N9-related findings have multi-operator impact.
+
+## How It Relates to Other Attacks
+
+- Builds on [GTP-U hijack](/attacks/14-20-specialized/gtp-tunneling) (Invade the Walled Garden) — same threat surface, more mechanisms.
+- Pairs with [Cross-Service Token](/attacks/14-20-specialized/cross-service-token) and [CITesting](/attacks/14-20-specialized/citesting) as the 2025 "5G core under siege" trio.
+
+## Defenses
+
+- Validate inner/outer header consistency on every tunnel termination point.
+- IPsec on N3/N9 (3GPP-recommended but rarely deployed end-to-end).
+- PFCP authentication (3GPP TS 29.244) with strict source policing.
+
+## References
+
+- "Uncovering Hidden Paths in 5G: Exploiting Protocol Tunneling and Network Boundary Bridging," ACM CCS 2025.

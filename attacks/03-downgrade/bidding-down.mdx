@@ -1,0 +1,64 @@
+---
+title: '5G to 2G Bidding-Down'
+description: 'Forcing a 5G UE to fall back to 2G/GSM where mutual authentication and strong ciphers are absent.'
+---
+
+<Info>
+**Ease: 3/5** | **Layer: NAS / RRC** | **Replicable: Yes** | **Extra HW: USRP B210, PA**
+</Info>
+
+## Paper
+
+| Field | Value |
+|---|---|
+| **Title** | "Never Let Me Down Again: Bidding-Down Attacks and Mitigations in 5G and 4G" |
+| **Authors** | Holtrup Chlosta, Wiesinger, Peschla, Holz |
+| **Venue** | WiSec '23 |
+| **Date** | May 2023 |
+| **Source Code** | -- |
+| **Ease** | 3/5 |
+| **Layer** | NAS / RRC |
+| **Extra HW** | USRP B210, power amplifier |
+
+## Attack Mechanism
+
+The bidding-down attack forces a 5G-capable UE to connect via 2G (GSM), where mutual authentication does not exist and encryption is weak or absent. This effectively strips all 5G security improvements.
+
+```
+1. Attacker sets up rogue gNB on the target 5G frequency
+2. UE connects to rogue gNB
+3. Rogue gNB sends RRC Release with redirectedCarrierInfo
+   pointing to a 2G (GSM) frequency
+4. UE obeys and tunes to the 2G frequency
+5. Attacker operates a 2G BTS (e.g., via OsmocomBB) on that frequency
+6. UE attaches to the 2G BTS — no mutual auth, weak/no encryption
+7. Attacker can now intercept calls, SMS, and data
+```
+
+<Warning>
+This attack chain works even against 5G SA if the UE supports 2G fallback. Most commercial UEs still have GSM enabled by default.
+</Warning>
+
+### Mitigation Status
+- Some operators have disabled 2G on the network side
+- Android 14+ provides a user toggle to disable 2G
+- iOS does not yet expose a 2G disable option to users
+- 3GPP has discussed inter-RAT redirect protections but nothing is mandatory
+
+## Replication
+
+| Component | Requirement |
+|---|---|
+| SDR (5G side) | USRP B210 — rogue gNB for initial lure |
+| SDR (2G side) | BladeRF or USRP B200 — for 2G BTS |
+| Software (5G) | srsRAN gNB or OAI gNB (RRC Release injection) |
+| Software (2G) | OsmocomBB + OsmoBTS |
+| Amplifier | PA on the 5G side for cell reselection |
+
+<Tip>
+Test with a UE that has 2G explicitly enabled in settings. Many newer UEs allow disabling 2G via "Settings > Network > Allow 2G" toggle.
+</Tip>
+
+## References
+1. Chlosta et al. "Never Let Me Down Again." WiSec '23.
+2. 3GPP TS 38.331 (RRC Release redirectedCarrierInfo)

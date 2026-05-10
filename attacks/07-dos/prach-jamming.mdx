@@ -1,0 +1,47 @@
+---
+title: "PRACH Jamming"
+description: "Jamming the Physical Random Access Channel to deny over 99.9% of connection attempts using commodity SDR hardware and a power amplifier."
+---
+
+# PRACH Jamming
+
+## Overview
+
+PRACH (Physical Random Access Channel) jamming targets the very first step of the 5G random access procedure. By transmitting noise or false preambles on the PRACH frequency-time resources, an attacker prevents UEs from completing initial access.
+
+**Ease of execution: 5/5** -- one of the simplest active attacks in the 5G threat landscape.
+
+## Key Paper
+
+- **Title:** PRACH Jamming in 5G NR
+- **Reference:** arXiv 2410.08729, October 2024
+- **Result:** Over 99.9% connection denial rate demonstrated
+
+## How It Works
+
+1. The attacker identifies the target cell's PRACH configuration from SIB1 (broadcast in cleartext).
+2. A USRP transmits high-power noise or random preambles aligned to the PRACH occasion slots.
+3. The gNB cannot decode legitimate preambles, so Msg1 of the RACH procedure fails for all UEs in range.
+
+The attack is effective because PRACH resources are predictable, periodic, and unencrypted.
+
+## Hardware Requirements
+
+| Component | Details |
+|-----------|---------|
+| SDR | USRP B210 or N310 (paper uses OAI + B210/N310) |
+| Power Amplifier | **Required** -- must overpower legitimate UE transmissions |
+| Software | OpenAirInterface (OAI) or custom GNU Radio flowgraph |
+| Antenna | Directional preferred for targeted jamming |
+
+## Impact
+
+- Complete denial of new connections in the target cell
+- Existing connected UEs are unaffected until they attempt re-establishment
+- Affects all UEs regardless of device or subscription type
+
+## Mitigations
+
+- PRACH preamble hopping (limited effectiveness if attacker jams all occasions)
+- Jammer detection and localization at the gNB
+- Backup frequency bands or inter-RAT fallback

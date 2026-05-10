@@ -1,0 +1,24 @@
+---
+title: 'Network Slicing Attacks'
+description: 'Rank #15 — Slice isolation breach, rogue gNB slice manipulation, RL side-channel'
+---
+
+## Sub-Attacks
+
+| Attack | Paper | Venue | Date | Ease | Repl. |
+|---|---|---|---|---|---|
+| Slice isolation breach | "5G Network Slicing: Security Challenges" | MDPI Sensors | 2025 | 3/5 | Partial |
+| **Rogue gNB slice manipulation** | **"Integrity Under Siege"** — Xu, Loscri, Rouvoy | arXiv 2511.03312 | **Nov 2025** | 3/5 | Partial |
+| RL-based side-channel | "Attacking Slicing via Side-channel RL" | arXiv 2409.11258 | Sep 2024 | 1/5 | No |
+
+## Rogue gNB Slice Manipulation (2025)
+
+A MITM gNodeB exploits protocol weaknesses to manipulate slice allocation. The rogue gNB can forge slice requests, causing QoS degradation, resource contamination, and approximately 80% CPU saturation on the UPF.
+
+**Replication:** Configure multiple slices on Open5GS, then use modified srsRAN gNB to forge NSSAI (Network Slice Selection Assistance Information) in registration requests. Requires PA for OTA operation.
+
+## Slice Isolation Breach
+
+Slice-hopping attacks allow malicious traffic migration across slice boundaries. Rogue slice instantiation and QoS/resource integrity manipulation are also possible when isolation is improperly configured.
+
+**Replication:** Test on your Open5GS with multiple slice configurations. Verify isolation between eMBB and URLLC slices.

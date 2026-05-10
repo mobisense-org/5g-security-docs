@@ -1,0 +1,45 @@
+---
+title: "RACH Msg1 Jamming (2026)"
+description: "A February 2026 attack targeting RACH Msg1 to deny 5G initial access, demonstrated on USRP B210 with OpenAirInterface."
+---
+
+# RACH Msg1 Jamming (2026)
+
+## Overview
+
+This attack specifically targets Msg1 (preamble transmission) of the 5G NR Random Access Channel procedure using precisely timed interference. Published in February 2026, it refines earlier PRACH jamming with improved timing accuracy and lower power requirements.
+
+**Ease of execution: 5/5** -- straightforward SDR-based jamming attack.
+
+## Key Paper
+
+- **Reference:** arXiv 2602.06634, February 2026
+- **Platform:** OpenAirInterface (OAI)-based implementation
+- **Hardware:** The paper **explicitly uses USRP B210**
+
+## How It Works
+
+1. The attacker passively decodes SSB and SIB1 to extract RACH configuration (preamble format, PRACH offset, periodicity).
+2. A jamming signal is transmitted precisely during Msg1 slots, targeting the preamble detection window at the gNB receiver.
+3. The gNB fails to detect valid preambles, blocking initial access for all UEs in range.
+
+Unlike broadband jamming, this attack only needs to transmit during the narrow RACH occasion windows, reducing average power consumption and detection probability.
+
+## Hardware Requirements
+
+| Component | Details |
+|-----------|---------|
+| SDR | **USRP B210** (explicitly used in the paper) |
+| Software | OpenAirInterface (OAI) |
+| Power Amplifier | Recommended for extended range |
+| Antenna | Standard omnidirectional or directional |
+
+## Relation to PRACH Jamming
+
+This attack is closely related to the PRACH jamming attack (arXiv 2410.08729) but provides a more refined, duty-cycled approach that targets only the Msg1 transmission window. The result is similar -- denial of new connections -- but with a potentially lower detection footprint.
+
+## Mitigations
+
+- Time-frequency randomization of RACH occasions
+- Anomaly detection on preamble reception statistics
+- Multi-band or multi-cell redundancy

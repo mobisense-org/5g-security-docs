@@ -1,0 +1,47 @@
+---
+title: "Cross-Service Token Attacks (5G Core)"
+description: "OAuth2 token misuse and confusion across 5G Network Functions — privilege escalation inside the SBA."
+---
+
+## Summary
+
+*Cross-Service Token: Finding Attacks in 5G Core Networks* (arXiv 2509.08992, Sep 2025) audits how OAuth2 access tokens are issued, validated, and reused across 5G Network Functions (AMF, SMF, AUSF, UDM, NRF, …). The 5G Service-Based Architecture mandates that NFs authenticate to each other with NRF-issued tokens — but in practice, several implementations validate tokens too loosely, allowing a token issued for service A to be replayed against service B.
+
+The result is a 5G-core analogue of classic web-app token-confusion bugs: privilege escalation between NFs without any cryptographic break.
+
+## Paper
+
+| Field | Details |
+|---|---|
+| **Authors** | (see arXiv) |
+| **Venue** | arXiv 2509.08992 (Sep 2025) |
+| **Targets** | Open5GS, free5GC, and standard SBA token flows |
+| **Class** | Authorization / token confusion |
+| **Ease** | 3/5 — requires foothold inside the SBA network or a malicious NF |
+
+## Attack Mechanism
+
+1. **Acquire a legitimate token** for some NF-to-NF interaction (e.g. AMF → SMF for session management). This may come from compromising one NF, or from being a registered-but-unprivileged NF.
+2. **Replay against a different service:** Some NFs accept the token because they validate the signature and audience loosely (e.g. ignoring `scope`, `nfType`, or specific service names within `scopes`).
+3. **Escalate:** The replayed token grants access to APIs the original token should not authorize — leading to subscriber data exposure, billing manipulation, or session hijack.
+
+## Why It Matters
+
+- **No crypto break required:** This is a logic bug at the authorization layer, the same class as IDOR in web APIs.
+- **Pre-existing in deployed cores:** Both Open5GS and free5GC have shipped versions where token validation is incomplete relative to 3GPP TS 33.501 §13.4.
+- **Defines a bug class for the SBA:** Sets up a systematic way to look for cross-service authorization flaws across all NFs.
+
+## How It Relates to Other Attacks
+
+- Companion to the [SBA / API attacks page](/attacks/14-20-specialized/sba-api).
+- Complements [CITesting](/attacks/14-20-specialized/citesting) — that work targets *context integrity*; this one targets *authorization context*.
+
+## Defenses
+
+- Enforce strict `scope` / `nfType` / `targetNfType` checks on every NF-to-NF call.
+- Bind tokens to specific service operations, not just NF identities.
+- Short-lived tokens with audience restrictions per 3GPP TS 33.501 §13.4.
+
+## References
+
+- "Cross-Service Token: Finding Attacks in 5G Core Networks," arXiv [2509.08992](https://arxiv.org/html/2509.08992v1), Sep 2025.

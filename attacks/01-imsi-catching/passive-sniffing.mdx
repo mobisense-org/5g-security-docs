@@ -1,0 +1,95 @@
+---
+title: 'Passive IMSI Sniffing (5G-NSA)'
+description: 'Passive eavesdropping on 5G Non-Standalone mode exposing IMSI on LTE anchor'
+---
+
+<Info>
+**Ease: 5/5** | **Layer: NAS** | **Replicable: Yes** | **Extra HW: None**
+</Info>
+
+## Paper
+
+| Field | Value |
+|---|---|
+| **Title** | "IMSI Catchers in the wild: A real world 4G/5G assessment" |
+| **Date** | 2023 |
+| **Type** | Large-scale real-world assessment (26 devices 4G, 4 devices 5G) |
+
+## Source Code
+
+| Tool | URL | Purpose |
+|---|---|---|
+| **LTESniffer** | [SysSec-KAIST/LTESniffer](https://github.com/SysSec-KAIST/LTESniffer) | Open-source LTE DL/UL eavesdropper |
+| **FALCON** | [falkenber9/falcon](https://github.com/falkenber9/falcon) | Real-time LTE PDCCH analysis |
+| **QCSuper** | [P1sec/QCSuper](https://github.com/P1sec/QCSuper) | Qualcomm baseband captures → PCAP |
+| **SCAT** | [fgsect/scat](https://github.com/fgsect/scat) | Samsung/Qualcomm signaling parser |
+
+## Attack Mechanism
+
+In **5G-NSA (Non-Standalone)** mode, the 5G NR radio is used for data but the **LTE core network handles control plane signaling**. This means:
+
+```
+5G-NSA Architecture:
+                    ┌──────────────┐
+                    │   5G NR gNB  │ ← data plane (encrypted)
+                    └──────┬───────┘
+                           │
+[UE] ─── OTA ────┤        │ (secondary)
+                  │        │
+                  │  ┌─────┴──────┐
+                  └──│  LTE eNB   │ ← control plane (IMSI in cleartext!)
+                     └──────┬─────┘
+                            │
+                     ┌──────┴──────┐
+                     │   LTE EPC   │ ← 4G core network
+                     └─────────────┘
+```
+
+The UE performs **LTE Attach** which sends the IMSI **unencrypted** on the LTE anchor. 5G's SUCI protection is completely bypassed because the control plane never touches the 5G core.
+
+### What You Can Capture
+- IMSI (permanent subscriber identity)
+- IMEI (device identity)
+- GUTI/TMSI (temporary identities)
+- Cell/sector information
+- Paging messages
+
+## Replication Guide
+
+### Simplest Setup (Passive Only)
+```
+[USRP B210] ──USB3──> [PC running LTESniffer]
+     │
+  [Antenna]     (receive only — no transmission needed)
+     │
+  ~~~OTA~~~
+     │
+[5G-NSA phones in range]
+```
+
+### Steps
+1. Install LTESniffer: `git clone https://github.com/SysSec-KAIST/LTESniffer`
+2. Build with srsRAN libraries
+3. Find LTE carrier frequency (use `srsRAN_4G/lib/examples/cell_search`)
+4. Run LTESniffer in DL+UL mode
+5. Capture IMSI from Attach Request messages
+6. Export to PCAP, analyze in Wireshark
+
+<Tip>
+This is the **easiest** attack to replicate. It requires zero transmission, zero modification to any software, and works with a single B210 in receive-only mode. Start here.
+</Tip>
+
+### No Extra Hardware Needed
+- No PA (passive receive only)
+- No duplexer (RX only)
+- No clock sync
+- No Faraday cage (you're just listening)
+
+## Limitations
+- Only works against 5G-NSA networks (not 5G-SA)
+- As operators migrate to SA, this attack will stop working
+- Range depends on antenna quality (~100m+ with good antenna)
+
+## References
+1. "IMSI Catchers in the wild: A real world 4G/5G assessment", 2023
+2. LTESniffer: Hoang et al., "LTESniffer: An Open-source LTE Downlink/Uplink Eavesdropper", WiSec '22

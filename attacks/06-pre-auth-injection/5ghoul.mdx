@@ -1,0 +1,37 @@
+---
+title: "5GHOUL"
+description: "Pre-authentication fuzzing framework exploiting 14+ vulnerabilities in Qualcomm and MediaTek 5G NR modems, requiring no SIM card and running via Docker."
+---
+
+## Summary
+
+5GHOUL is a pre-authentication vulnerability exploitation framework targeting commercial 5G NR modems from Qualcomm and MediaTek. It discovered 14 or more vulnerabilities in the pre-authentication RRC/NAS handling of these chipsets, enabling denial of service, forced downgrades, and modem crashes -- all without the attacker needing a SIM card. With Docker-based deployment and 661 GitHub stars, it is one of the most accessible 5G attack tools available.
+
+## Paper
+
+| Field | Details |
+|---|---|
+| **Authors** | Matheus K. Garbelini et al., SUTD Asset Group |
+| **Venue** | December 2023 disclosure + IEEE 2024 publication |
+| **GitHub** | [asset-group/5ghoul-5g-nr-attacks](https://github.com/asset-group/5ghoul-5g-nr-attacks) (661 stars) |
+| **Deployment** | Docker container with pre-built environment |
+| **Affected Chipsets** | Qualcomm + MediaTek 5G modems |
+| **SIM Required** | No |
+| **SDR** | USRP B210 |
+| **Ease of Replication** | 5/5 |
+
+## Attack Mechanism
+
+5GHOUL operates a minimal rogue gNB that broadcasts legitimate-looking SSB and MIB/SIB1 to attract nearby 5G UEs. When a UE initiates the RACH procedure, 5GHOUL responds with fuzzed or malformed RRC and NAS messages during the pre-authentication exchange. Because these messages are processed before the security context is established, the modem's baseband firmware parses them without cryptographic verification. The 14 or more discovered vulnerabilities include buffer overflows, assertion failures, and state machine violations in modem firmware, resulting in crashes, persistent denial of service (requiring reboot), and forced fallback to LTE.
+
+## Replication Notes
+
+- **Ease**: This is one of the most straightforward 5G attacks to replicate. The Docker container packages the entire tool chain including a modified Open5GS core and srsRAN-based gNB.
+- **Hardware**: A single USRP B210 is all that is needed. No PA or additional RF hardware is required since the rogue gNB only needs to attract devices in close proximity.
+- **No SIM**: The attacker does not need a SIM card or any subscriber credentials. The attack targets the modem firmware's pre-auth message parser.
+- **Steps**: (1) Pull the Docker image. (2) Connect B210. (3) Run the exploit selector to choose a target vulnerability. (4) Power on target device within range.
+
+## References
+
+- M. K. Garbelini et al., "5GHOUL: Unleashing Chaos on 5G Edge Devices," December 2023 / IEEE, 2024.
+- GitHub: [asset-group/5ghoul-5g-nr-attacks](https://github.com/asset-group/5ghoul-5g-nr-attacks)

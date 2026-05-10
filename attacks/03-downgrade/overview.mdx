@@ -1,0 +1,44 @@
+---
+title: 'Overview'
+description: 'Fame Rank #3 — Forcing UEs to fall back to weaker protocols: 5G to 2G bidding-down, null ciphers, NAS SMC stripping, and inter-RAT redirects.'
+---
+
+## Why It's #3
+
+Downgrade attacks exploit the backward-compatibility requirement of mobile networks. Even a 5G-capable UE can be forced to use 2G (no mutual authentication, weak ciphers) or to negotiate null encryption. These attacks are practical because operators still deploy 2G/3G for coverage and inter-RAT handovers lack cryptographic binding.
+
+## Sub-Attacks
+
+<CardGroup cols={2}>
+  <Card title="5G to 2G Bidding-Down" icon="arrow-down" href="/attacks/03-downgrade/bidding-down">
+    Force UE from 5G SA to 2G via inter-RAT redirect. WiSec '23.
+  </Card>
+  <Card title="Null Cipher Forcing" icon="lock-open" href="/attacks/03-downgrade/null-cipher">
+    Force NEA0/NIA0 negotiation — no encryption, no integrity.
+  </Card>
+  <Card title="Inter-RAT Redirect" icon="right-left" href="/attacks/03-downgrade/inter-rat-redirect">
+    RRC Release with redirectedCarrierInfo to push UE to 2G/3G/4G.
+  </Card>
+</CardGroup>
+
+## Summary Table
+
+| Sub-Attack | Paper | Venue | Date | Code | Ease | Layer | Extra HW |
+|---|---|---|---|---|---|---|---|
+| Bidding-Down (5G→2G) | "Never Let Me Down Again" | WiSec '23 | May 2023 | -- | 3/5 | NAS/RRC | USRP B210, PA |
+| Null Cipher (NEA0/NIA0) | Chlosta et al. | USENIX '23 | Aug 2023 | -- | 3/5 | NAS | USRP B210 |
+| NAS SMC Strip | Multiple | Various | 2019+ | -- | 3/5 | NAS | Rogue gNB |
+| Inter-RAT Redirect | "Never Let Me Down Again" | WiSec '23 | May 2023 | -- | 3/5 | RRC | USRP B210, PA |
+
+## Key Reference
+
+Holtrup Chlosta, Wiesinger, Peschla, Holz. **"Never Let Me Down Again: Bidding-Down Attacks and Mitigations in 5G and 4G."** WiSec '23, May 2023.
+
+## 5G vs 4G: What Changed
+
+| Aspect | 4G (LTE) | 5G (NR) |
+|---|---|---|
+| Inter-RAT redirect | RRC redirect to 2G/3G | Still possible (redirectedCarrierInfo in RRC Release) |
+| Cipher negotiation | EEA0 common | NEA0 should be banned but still supported by some UEs |
+| Integrity protection | Optional on UP | Mandatory on CP, optional on UP |
+| Bidding-down defense | UE Security Capabilities IE | Same mechanism — but rogue gNB can strip it |

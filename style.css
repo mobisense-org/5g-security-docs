@@ -1,0 +1,135 @@
+/* Width overrides for /attacks/overview master table page.
+ * Scoped to a body class set by Mintlify based on the route, OR by inline CSS in overview.mdx. */
+
+body[class*="overview"] main,
+body[class*="overview"] article,
+body[class*="overview"] .prose,
+body[class*="attacks"] main,
+body[class*="attacks"] article,
+body[class*="attacks"] .prose {
+  max-width: 100% !important;
+  width: 100% !important;
+}
+
+/* The Tailwind `prose` plugin caps content at ~65ch by default; bust it. */
+.prose,
+.prose-lg,
+.prose-xl,
+.prose-2xl,
+[class*="prose"] {
+  max-width: none !important;
+}
+
+/* When the master table is on the page, let it use full width and scroll horizontally if needed. */
+table {
+  width: 100%;
+  display: block;
+  overflow-x: auto;
+  border-collapse: collapse;
+  white-space: nowrap;
+  font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-size: 13.5px;
+  line-height: 1.45;
+}
+
+table th,
+table td {
+  white-space: normal;
+  padding: 9px 12px;
+  vertical-align: top;
+}
+
+table th {
+  font-weight: 600;
+  font-size: 12.5px;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: #6b7280;
+}
+
+/* Kill the noisy red underlines on links inside tables */
+table a,
+table a:link,
+table a:visited {
+  color: inherit !important;
+  text-decoration: none !important;
+  border-bottom: none !important;
+  background-image: none !important;
+}
+
+/* Subtle hover: only underline + color on hover */
+table a:hover {
+  color: #DC2626 !important;
+  text-decoration: underline !important;
+  text-decoration-thickness: 1px !important;
+  text-underline-offset: 2px !important;
+}
+
+/* Bold rows (the **NEW** entries) keep emphasis but not link decoration */
+table strong a,
+table b a {
+  font-weight: 600;
+}
+
+/* Toolbar above the master table (search + filters) */
+.attacks-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  margin: 12px 0 16px 0;
+  padding: 12px;
+  background: rgba(220, 38, 38, 0.04);
+  border: 1px solid rgba(220, 38, 38, 0.15);
+  border-radius: 8px;
+}
+.attacks-toolbar input,
+.attacks-toolbar select {
+  padding: 7px 10px;
+  font-size: 13px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  background: white;
+  color: #111827;
+  font-family: inherit;
+}
+.attacks-toolbar input { flex: 1 1 220px; min-width: 180px; }
+.attacks-toolbar input:focus,
+.attacks-toolbar select:focus {
+  outline: none;
+  border-color: #DC2626;
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.15);
+}
+.attacks-toolbar button {
+  background: #DC2626;
+  color: white;
+  border: none;
+  padding: 7px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  font-family: inherit;
+}
+.attacks-toolbar button:hover { background: #991B1B; }
+.attacks-toolbar .stats {
+  margin-left: auto;
+  color: #6b7280;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+/* Sort indicator on table headers */
+table thead th {
+  cursor: pointer;
+  user-select: none;
+}
+table thead th .sort-arrow {
+  display: inline-block;
+  margin-left: 4px;
+  color: #d1d5db;
+  font-size: 11px;
+}
+table thead th.sort-asc .sort-arrow,
+table thead th.sort-desc .sort-arrow {
+  color: #DC2626;
+}
+

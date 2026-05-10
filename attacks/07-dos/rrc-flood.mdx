@@ -1,0 +1,49 @@
+---
+title: "RRC Connection Flood"
+description: "Flooding the gNB with RRCSetupRequest messages to exhaust radio resources and deny service, as identified by the 5G-SPECTOR framework."
+---
+
+# RRC Connection Flood
+
+## Overview
+
+An RRC Connection Flood attack overwhelms the gNB by rapidly sending a high volume of RRCSetupRequest messages. Each request forces the gNB to allocate resources (C-RNTI, SRB, memory), and a sufficient flood rate exhausts these resources, blocking legitimate UEs.
+
+**Ease of execution: 4/5** -- requires the ability to generate valid RRC messages from one or more rogue UEs.
+
+## Key Reference
+
+- **Framework:** 5G-SPECTOR
+- **Venue:** NDSS, February 2024
+- **GitHub (detection side):** [5GSEC/5G-Spector](https://github.com/5GSEC/5G-Spector)
+
+## How It Works
+
+1. The attacker uses one or more SDR-based UE emulators to send RRCSetupRequest messages at a high rate.
+2. Each request consumes gNB resources: RNTI allocation, signaling radio bearer setup, and scheduler state.
+3. Once the gNB's connection table is full, legitimate UEs receive RRCReject or simply time out.
+4. The attack can be sustained indefinitely with minimal attacker hardware.
+
+## Hardware Requirements
+
+| Component | Details |
+|-----------|---------|
+| SDR | USRP B210 (one or more) |
+| Software | srsRAN UE, OAI nrUE, or custom RRC message generator |
+| Power Amplifier | Optional (close-range attack feasible without PA) |
+
+## Impact
+
+- Denial of service for all new connections in the target cell
+- Potential degradation of existing connections due to scheduler overload
+- Affects both eMBB and URLLC traffic
+
+## Detection
+
+5G-SPECTOR provides an eBPF-based detection framework that monitors RAN signaling patterns for anomalous RRC request rates. It can flag flood conditions in near-real-time.
+
+## Mitigations
+
+- Rate-limiting RRCSetupRequest processing per preamble or per time window
+- Connection request authentication at earlier stages
+- Deploying 5G-SPECTOR or similar IDS on the gNB

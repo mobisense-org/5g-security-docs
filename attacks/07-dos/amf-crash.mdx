@@ -1,0 +1,53 @@
+---
+title: "AMF Crash (RANsacked)"
+description: "A single malformed NAS packet can crash the Access and Mobility Management Function, as demonstrated by the RANsacked project which found 119 vulnerabilities and 97 CVEs."
+---
+
+# AMF Crash (RANsacked)
+
+## Overview
+
+The RANsacked project revealed that a single malformed NAS or NGAP packet can crash the AMF (Access and Mobility Management Function) in multiple open-source 5G core implementations. An AMF crash is catastrophic: it disconnects every UE served by that core network instance.
+
+**Ease of execution: 3/5** -- requires knowledge of NAS/NGAP protocol structure and access to a gNB (real or emulated) connected to the target core.
+
+## Key Paper
+
+- **Authors:** Bennett et al.
+- **Venue:** ACM CCS, November 2024
+- **Result:** 119 vulnerabilities and 97 CVEs across 7 implementations
+- **Affected stacks:** srsRAN, Open5GS, OpenAirInterface, Magma, Athonet, SD-Core, NextEPC
+
+## How It Works
+
+1. The attacker crafts a malformed NAS message (e.g., malformed registration request, invalid IE length, unexpected optional fields).
+2. The message is sent through the RAN to the AMF via NGAP.
+3. A parsing bug in the AMF causes a null-pointer dereference, buffer overflow, or assertion failure.
+4. The AMF process crashes, disconnecting all active UE sessions.
+
+In some cases, the AMF auto-restarts but re-crashes when the malformed message is retransmitted, causing a persistent DoS loop.
+
+## Hardware Requirements
+
+| Component | Details |
+|-----------|---------|
+| SDR | Not strictly required (can use a simulated gNB) |
+| Software | Modified srsRAN UE or custom NGAP message crafter |
+| Target | Open5GS, OAI CN, Magma, or other affected 5G core |
+
+## Impact
+
+- **Full core network DoS** -- all UEs lose connectivity
+- **Cascading failures** -- if AMF crash triggers restarts of related NFs (SMF, UDM)
+- **Persistent DoS** -- if the triggering message is retransmitted on reconnection
+
+## Relation to Fuzzing
+
+This attack was discovered through the RANsacked fuzzing campaign. See the [RANsacked fuzzing page](/attacks/10-fuzzing/ransacked) for details on the ASNFuzzGen tool and full vulnerability list.
+
+## Mitigations
+
+- Apply patches for all 97 published CVEs
+- Input validation and fuzzing of NAS/NGAP message parsers
+- AMF redundancy with independent parsing paths
+- Rate-limiting and anomaly detection on malformed NAS messages

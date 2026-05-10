@@ -1,0 +1,289 @@
+---
+title: 'All Attacks'
+description: 'Every 5G attack from 2023-2026 — paper, code, detection method, and replicability'
+mode: "wide"
+---
+
+<style>{`
+  /* Stretch Mintlify's content area to fill available width on this page */
+  main, article, .prose,
+  [class*="content"]:not([class*="sidebar"]):not([class*="Sidebar"]) {
+    max-width: 100% !important;
+    width: 100% !important;
+  }
+  .prose, .prose-lg, .prose-xl {
+    max-width: none !important;
+  }
+  /* Wrap the table in horizontal scroll if it still overflows */
+  .prose table, article table, main table {
+    display: block;
+    width: 100%;
+    overflow-x: auto;
+    white-space: nowrap;
+    border-collapse: collapse;
+  }
+  .prose table th, .prose table td,
+  article table th, article table td,
+  main table th, main table td {
+    white-space: normal;
+  }
+`}</style>
+
+## Master Table (2023-2026)
+
+Most cells in each row link to the **attack's detail page** (so you can click ~anywhere in the row to open it). The **Paper** column links to the original paper or vendor disclosure. The **Code** column links to a public repo when one exists.
+
+**Detection key**
+
+- `RF AI` — detectable from a passive air-interface sniffer + ML classifier (no operator access required).
+- `BS Logs` — requires gNB / 5G-core / SBA telemetry to detect; not visible on the air.
+- `Both` — observable from either side.
+- `Neither` — attacker is itself passive or operates out-of-band; effectively undetectable, only mitigatable.
+
+**Threat model key**
+
+- `Passive RF` — sniffer in radio coverage, no transmission.
+- `Active RF` — transmits on the air (overshadowing, injection, jammer) but no full fake cell.
+- `Rogue gNB` — full fake base station that the UE attaches to.
+- `Relay gNB` — two SDRs sitting between victim UE and a real gNB.
+- `Rogue UE` — attacker-controlled UE sending crafted uplink (NAS/RRC) messages.
+- `SBA` — needs IP-level reach into the operator's 5G core / Service-Based Architecture.
+- `Backhaul` — needs reach to transport between RAN and core (N3/N9, GTP).
+- `Internet` — public-Internet attacker (only when operator misconfigures exposure).
+- `Physical` — needs hardware access to a device (femtocell, CPE, modem).
+
+| # | Cat | Attack | Attacker | Victim | Paper | Venue | Date | Code | Detect | Threat | Repl. |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| [1](/attacks/01-imsi-catching/passive-sniffing) | [IMSI/SUPI](/attacks/01-imsi-catching/passive-sniffing) | [Passive IMSI (NSA)](/attacks/01-imsi-catching/passive-sniffing) | Passive sniffer | Subscriber | [IMSI Catchers in the Wild](https://www.sciencedirect.com/science/article/abs/pii/S1389128621002061) | Comput. Netw. | [2023](/attacks/01-imsi-catching/passive-sniffing) | [LTESniffer](https://github.com/SysSec-KAIST/LTESniffer) | Neither | Passive RF | 5/5 |
+| [1](/attacks/01-imsi-catching/sni5gect-uplink) | | [Uplink SUPI extract](/attacks/01-imsi-catching/sni5gect-uplink) | SDR (sniff+inject) | UE | [SNI5GECT (Luo et al.)](https://www.usenix.org/system/files/usenixsecurity25-luo-shijie.pdf) | USENIX '25 | [Aug 2025](/attacks/01-imsi-catching/sni5gect-uplink) | [Sni5Gect](https://github.com/asset-group/Sni5Gect-5GNR-sniffing-and-exploitation) | RF AI | Active RF | 4/5 |
+| [2](/attacks/02-fake-base-station/sib1-spoofing) | [Fake BS](/attacks/02-fake-base-station/sib1-spoofing) | [SIB1 spoofing](/attacks/02-fake-base-station/sib1-spoofing) | Rogue gNB | UE | [5G-Spector](https://www.ndss-symposium.org/wp-content/uploads/2024-527-paper.pdf) | NDSS '24 | [Sep 2024](/attacks/02-fake-base-station/sib1-spoofing) | [5G-Spector](https://github.com/5GSEC/5G-Spector) | RF AI | Rogue gNB | 4/5 |
+| [2](/attacks/02-fake-base-station/mitm-relay) | | [MITM relay gNB](/attacks/02-fake-base-station/mitm-relay) | Relay gNB (2 SDRs) | UE | [AdaptOver (Erni et al.)](https://arxiv.org/abs/2106.05039) | CCS '22 | [Aug 2024](/attacks/02-fake-base-station/mitm-relay) | No | Both | Relay gNB | 3/5 |
+| [2](/attacks/02-fake-base-station/cell-reselection) | | [Cell reselection](/attacks/02-fake-base-station/cell-reselection) | Rogue gNB | UE | [Unprotected Low Layers](https://arxiv.org/abs/2403.06717) | arXiv '24 | [Mar 2024](/attacks/02-fake-base-station/cell-reselection) | No | RF AI | Rogue gNB | 4/5 |
+| [2](/attacks/02-fake-base-station/femtocells) | | **[Femtocell field study](/attacks/02-fake-base-station/femtocells)** | Compromised femtocell | Subscriber + Operator | [Small Cell, Big Risk](https://www.ndss-symposium.org/ndss2026/accepted-papers/) | NDSS '26 | **[NDSS 2026](/attacks/02-fake-base-station/femtocells)** | No | Both | Physical | 2/5 |
+| [3](/attacks/03-downgrade/bidding-down) | [Downgrade](/attacks/03-downgrade/bidding-down) | [5G-to-2G bidding-down](/attacks/03-downgrade/bidding-down) | Rogue gNB | UE | [Never Let Me Down Again](https://dl.acm.org/doi/10.1145/3558482.3581774) | WiSec '23 | [May 2023](/attacks/03-downgrade/bidding-down) | No | Both | Rogue gNB | 4/5 |
+| [4](/attacks/05-signal-overshadowing/5gone) | [Overshadow](/attacks/05-signal-overshadowing/5gone) | **[5Gone (uplink, 5G-SA)](/attacks/05-signal-overshadowing/5gone)** | SDR (overshadower) | UE | [5Gone (Erni et al.)](https://arxiv.org/abs/2602.10272) | arXiv '26 | **[Feb 2026](/attacks/05-signal-overshadowing/5gone)** | No | Both | Active RF | 3/5 |
+| [5](/attacks/06-pre-auth-injection/sni5gect) | [Pre-Auth](/attacks/06-pre-auth-injection/sni5gect) | [SNI5GECT (sniff+inject)](/attacks/06-pre-auth-injection/sni5gect) | SDR (sniff+inject) | UE modem | [SNI5GECT (Luo et al.)](https://www.usenix.org/system/files/usenixsecurity25-luo-shijie.pdf) | USENIX '25 | [Aug 2025](/attacks/06-pre-auth-injection/sni5gect) | [Sni5Gect](https://github.com/asset-group/Sni5Gect-5GNR-sniffing-and-exploitation) | RF AI | Active RF | 4/5 |
+| [5](/attacks/06-pre-auth-injection/5ghoul) | | [5GHOUL (modem fuzz)](/attacks/06-pre-auth-injection/5ghoul) | Rogue gNB | UE modem | [5GHOUL Disclosure](https://asset-group.github.io/disclosures/5ghoul/5ghoul.pdf) | IEEE TDSC '25 | [Dec 2023](/attacks/06-pre-auth-injection/5ghoul) | [5ghoul-5g-nr-attacks](https://github.com/asset-group/5ghoul-5g-nr-attacks) | RF AI | Rogue gNB | 5/5 |
+| [5](/attacks/06-pre-auth-injection/conset) | | **[CONSET (LLM fuzz)](/attacks/06-pre-auth-injection/conset)** | Rogue gNB | UE modem | [CONSET](https://success.cse.tamu.edu/2025/12/20/new-5g-security-research-conset-will-appear-in-usenix-security26/) | USENIX '26 | **[USENIX 2026](/attacks/06-pre-auth-injection/conset)** | not yet | RF AI | Rogue gNB | 2/5 |
+| [6](/attacks/07-dos/prach-jamming) | [DoS](/attacks/07-dos/prach-jamming) | [PRACH jam (99.9%)](/attacks/07-dos/prach-jamming) | Jammer SDR | Cell users (all UEs) | [Smart PRACH Jamming](https://arxiv.org/abs/2410.08729) | GLOBECOM '24 | [Oct 2024](/attacks/07-dos/prach-jamming) | [5G-PRACH-Smart-Jammer](https://github.com/dfki-in/5G-PRACH-Smart-Jammer) | Both | Active RF | 5/5 |
+| [6](/attacks/07-dos/rach-msg1-jamming) | | **[RACH Msg1 jam](/attacks/07-dos/rach-msg1-jamming)** | Jammer SDR | Cell users | [Jamming RACH in 5G/B5G](https://arxiv.org/html/2602.06634v1) | arXiv '26 | **[Feb 2026](/attacks/07-dos/rach-msg1-jamming)** | OAI+B210 | Both | Active RF | 5/5 |
+| [6](/attacks/07-dos/rrc-flood) | | [RRC flood](/attacks/07-dos/rrc-flood) | Rogue UEs | gNB | [5G-Spector](https://www.ndss-symposium.org/wp-content/uploads/2024-527-paper.pdf) | NDSS '24 | [Feb 2024](/attacks/07-dos/rrc-flood) | [5G-Spector](https://github.com/5GSEC/5G-Spector) | Both | Rogue UE | 4/5 |
+| [6](/attacks/07-dos/rrc-signaling-storm) | | [RRC storm](/attacks/07-dos/rrc-signaling-storm) | Rogue UEs | gNB / 5GC | [RRC Signaling Storm Detection](https://arxiv.org/abs/2504.15738) | arXiv '25 | [Apr 2025](/attacks/07-dos/rrc-signaling-storm) | No | BS Logs | Rogue UE | 3/5 |
+| [6](/attacks/07-dos/breaking-5g-lower-layer) | | **[SIB1+TA DoS](/attacks/07-dos/breaking-5g-lower-layer)** | Rogue gNB | UE | [Breaking 5G Lower Layer](https://arxiv.org/abs/2602.10250) | arXiv '26 | **[Feb 2026](/attacks/07-dos/breaking-5g-lower-layer)** | B210 testbed | RF AI | Rogue gNB | 4/5 |
+| [6](/attacks/07-dos/amf-crash) | | [AMF crash](/attacks/07-dos/amf-crash) | Rogue UE | AMF (5GC) | [RANsacked (Bennett et al.)](https://cise.ufl.edu/~butler/pubs/ccs24-bennett-ransacked.pdf) | CCS '24 | [Nov 2024](/attacks/07-dos/amf-crash) | No | BS Logs | Rogue UE | 3/5 |
+| [7](/attacks/10-fuzzing/ransacked) | [Fuzzing](/attacks/10-fuzzing/ransacked) | [RANsacked (97 CVEs)](/attacks/10-fuzzing/ransacked) | Rogue UE / gNB | 5GC NFs | [RANsacked](https://cise.ufl.edu/~butler/pubs/ccs24-bennett-ransacked.pdf) | CCS '24 | [Nov 2024](/attacks/10-fuzzing/ransacked) | ASNFuzzGen (private) | BS Logs | Rogue UE | 4/5 |
+| [7](/attacks/10-fuzzing/5gbasechecker) | | [5GBaseChecker (13 0-days)](/attacks/10-fuzzing/5gbasechecker) | Rogue gNB | UE modem | [Logic Gone Astray](https://www.usenix.org/conference/usenixsecurity24/presentation/tu) | USENIX '24 | [Aug 2024](/attacks/10-fuzzing/5gbasechecker) | [5GBaseChecker](https://github.com/SyNSec-den/5GBaseChecker) | RF AI | Rogue gNB | 3/5 |
+| [7](/attacks/10-fuzzing/open5gs-vulns) | | [Open5GS vulns](/attacks/10-fuzzing/open5gs-vulns) | Network attacker | 5GC | [Open5GS Vulnerability Assessment](https://www.mdpi.com/2624-800X/4/1/2) | MDPI '24 | [Jan 2024](/attacks/10-fuzzing/open5gs-vulns) | [Open5GS](https://github.com/open5gs/open5gs) | BS Logs | SBA | 4/5 |
+| [7](/attacks/10-fuzzing/corecrisis) | | **[CoreCrisis (5GC, 8 CVEs)](/attacks/10-fuzzing/corecrisis)** | SBI attacker | 5GC | [CoreCrisis](https://www.usenix.org/system/files/usenixsecurity25-dong-yilu.pdf) | USENIX '25 | **[USENIX 2025](/attacks/10-fuzzing/corecrisis)** | [CoreCrisis](https://github.com/SyNSec-den/CoreCrisis) | BS Logs | SBA | 4/5 |
+| [7](/attacks/10-fuzzing/baseband-fuzzing) | | **[Baseband emulation cluster](/attacks/10-fuzzing/baseband-fuzzing)** | Rogue gNB / emulator | UE modem | [Stateful + BaseBridge + LLFuzz + FirmState](/attacks/10-fuzzing/baseband-fuzzing) | S&P '25 / WiSec '25 | **[2025](/attacks/10-fuzzing/baseband-fuzzing)** | partial | RF AI | Rogue gNB | 3/5 |
+| [8](/attacks/11-location-tracking/crnti-tracking) | [Location](/attacks/11-location-tracking/crnti-tracking) | [C-RNTI tracking](/attacks/11-location-tracking/crnti-tracking) | Passive sniffer | Subscriber | [Demystifying Privacy 5G SA](https://arxiv.org/abs/2409.17700) | MobiCom '24 | [Sep 2024](/attacks/11-location-tracking/crnti-tracking) | [5GSniffer](https://github.com/spritelab/5GSniffer) | Neither | Passive RF | 5/5 |
+| [8](/attacks/11-location-tracking/guti-visual-rf) | | **[GUTI Visual-RF correlation](/attacks/11-location-tracking/guti-visual-rf)** | Sniffer + camera | Subscriber | [Passive Multi-Target GUTI ID](https://www.ndss-symposium.org/ndss2026/accepted-papers/) | NDSS '26 | **[NDSS 2026](/attacks/11-location-tracking/guti-visual-rf)** | No | Neither | Passive RF | 3/5 |
+| [9](/attacks/13-battery-drain/mac-ce-spoofing) | [Battery](/attacks/13-battery-drain/mac-ce-spoofing) | [MAC CE spoofing](/attacks/13-battery-drain/mac-ce-spoofing) | Rogue gNB / SDR | UE | [Unprotected Low Layers](https://arxiv.org/abs/2403.06717) | arXiv '24 | [Mar 2024](/attacks/13-battery-drain/mac-ce-spoofing) | No | RF AI | Active RF | 4/5 |
+| [10](/attacks/14-20-specialized/network-slicing) | [Slicing](/attacks/14-20-specialized/network-slicing) | **[Rogue gNB slice](/attacks/14-20-specialized/network-slicing)** | Rogue gNB | 5GC slice / tenants | [Integrity Under Siege (Xu)](https://arxiv.org/abs/2511.03312) | arXiv '25 | **[Nov 2025](/attacks/14-20-specialized/network-slicing)** | No | BS Logs | Rogue gNB | 3/5 |
+| [11](/attacks/14-20-specialized/gtp-tunneling) | [GTP](/attacks/14-20-specialized/gtp-tunneling) | [GTP-U hijack](/attacks/14-20-specialized/gtp-tunneling) | Internet attacker | UPF / subscriber traffic | [Invade the Walled Garden](https://www.jianjunchen.com/p/gtp-cellular.sp25.pdf) | S&P '25 | [May 2025](/attacks/14-20-specialized/gtp-tunneling) | No | BS Logs | Internet | 1/5 |
+| [11](/attacks/14-20-specialized/hidden-paths) | | **[Hidden Paths in 5G](/attacks/14-20-specialized/hidden-paths)** | Backhaul attacker | 5GC / cross-PLMN | [Uncovering Hidden Paths](https://dl.acm.org/doi/proceedings/10.1145/3719027) | CCS '25 | **[CCS 2025](/attacks/14-20-specialized/hidden-paths)** | No | BS Logs | Backhaul | 2/5 |
+| [12](/attacks/14-20-specialized/sba-api) | [SBA](/attacks/14-20-specialized/sba-api) | [API injection + token abuse](/attacks/14-20-specialized/sba-api) | Network attacker | 5GC NFs | [Pen-Testing 5GC Web](https://arxiv.org/abs/2403.01871) | arXiv '24 | [2024-2025](/attacks/14-20-specialized/sba-api) | Burp / OWASP ZAP | BS Logs | SBA | 3/5 |
+| [12](/attacks/14-20-specialized/cross-service-token) | | **[Cross-Service Token](/attacks/14-20-specialized/cross-service-token)** | Compromised NF | 5GC NFs | [Cross-Service Token](https://arxiv.org/abs/2509.08992) | arXiv '25 | **[Sep 2025](/attacks/14-20-specialized/cross-service-token)** | No | BS Logs | SBA | 3/5 |
+| [12](/attacks/14-20-specialized/citesting) | | **[CITesting (context integrity)](/attacks/14-20-specialized/citesting)** | Network attacker | 5GC | [CITesting](https://dl.acm.org/doi/proceedings/10.1145/3719027) | CCS '25 | **[CCS 2025](/attacks/14-20-specialized/citesting)** | No | BS Logs | SBA | 3/5 |
+| [13](/attacks/14-20-specialized/oran-supply-chain) | [O-RAN](/attacks/14-20-specialized/oran-supply-chain) | [Interface exploit](/attacks/14-20-specialized/oran-supply-chain) | Malicious xApp / E2 attacker | gNB / RIC | [5G-Spector + NTIA](https://www.ndss-symposium.org/wp-content/uploads/2024-527-paper.pdf) | NDSS '24 | [2023-2025](/attacks/14-20-specialized/oran-supply-chain) | [5G-Spector](https://github.com/5GSEC/5G-Spector) | BS Logs | SBA | 4/5 |
+
+## Quick Lens
+
+**Best targets for a passive RF + AI defender** (everything in `RF AI` or `Both`): SIB1 spoofing, MITM relay, cell reselection, 5Gone, 5GHOUL, CONSET, PRACH jam, RACH Msg1 jam, RRC flood, SIB1+TA DoS, 5GBaseChecker delivery, MAC CE spoofing, baseband-fuzzing OTA delivery, downgrade, femtocells.
+
+**Visible only with operator access** (`BS Logs`): RRC storm, AMF crash, RANsacked-discovered bugs, Open5GS vulns, CoreCrisis, rogue-gNB slicing, GTP-U, hidden paths, SBA API/token abuse, CITesting, O-RAN interface exploits.
+
+**Effectively undetectable** (`Neither`): passive IMSI sniffing in NSA, C-RNTI tracking, GUTI visual-RF correlation. These are mitigation problems, not detection problems.
+
+## Recent Additions (2025-2026)
+
+The bolded rows are new since the original 2023-2024 master list. Three concentrated trends:
+
+- **5G core (SBA) attacks went mainstream** — CoreCrisis (USENIX '25), Cross-Service Token (Sep '25), CITesting (CCS '25), Hidden Paths (CCS '25). The core is now where the bugs are, equivalent to where web-app security was around 2010.
+- **Baseband emulation + over-the-air fuzzing converged** — Stateful Analysis, BaseBridge, LLFuzz, and FirmState (all 2025) closed the realism gap that bottlenecked Shannon/MediaTek emulation. Expect a fresh wave of modem CVEs through 2026.
+- **Real-deployment field studies** — *Small Cell, Big Risk* (NDSS '26) audited carrier-deployed femtocells; *Passive Multi-Target GUTI Identification* (NDSS '26) introduced cross-modal passive tracking using a camera + RF sniffer.
+
+## Recent CVEs (2025-2026)
+
+| CVE | Target | Severity |
+|---|---|---|
+| CVE-2026-1737 | Open5GS | CRITICAL (RCE) |
+| CVE-2026-4240 | Open5GS | HIGH (DoS) |
+| CVE-2026-21385 | Qualcomm Snapdragon | HIGH |
+| CVE-2025-20753 | MediaTek 5G modems | HIGH |
+| CVE-2025-15555 | Open5GS | HIGH |
+
+<script>{`
+(function () {
+  function findTable() {
+    const tables = document.querySelectorAll("table");
+    for (const t of tables) {
+      const headers = [...t.querySelectorAll("thead th")].map(th => th.textContent.trim().toLowerCase());
+      if (headers.length >= 7 && headers.includes("attack") && headers.includes("detect") && headers.includes("paper")) {
+        return t;
+      }
+    }
+    return null;
+  }
+
+  function enhance() {
+    const table = findTable();
+    if (!table || table.dataset.atkEnhanced) return !!table;
+    table.dataset.atkEnhanced = "1";
+
+    const headers = [...table.querySelectorAll("thead th")];
+    const cols = {};
+    headers.forEach((th, i) => {
+      const k = th.textContent.trim().toLowerCase().replace(/[^a-z]/g, "");
+      cols[k] = i;
+      const arrow = document.createElement("span");
+      arrow.className = "sort-arrow";
+      arrow.textContent = "↕";
+      th.appendChild(arrow);
+    });
+
+    const tbody = table.querySelector("tbody");
+    const rows = [...tbody.querySelectorAll("tr")];
+
+    // Build toolbar
+    const toolbar = document.createElement("div");
+    toolbar.className = "attacks-toolbar";
+    toolbar.innerHTML =
+      '<input type="text" id="atk-q" placeholder="Search attacks, papers, attackers, victims..." />' +
+      '<select id="atk-detect"><option value="">All detection</option><option>RF AI</option><option>BS Logs</option><option>Both</option><option>Neither</option></select>' +
+      '<select id="atk-threat"><option value="">All threat models</option></select>' +
+      '<select id="atk-venue"><option value="">All venues</option></select>' +
+      '<select id="atk-cat"><option value="">All categories</option></select>' +
+      '<select id="atk-code"><option value="">Code (any)</option><option value="yes">Has code</option><option value="no">No code</option></select>' +
+      '<select id="atk-repl"><option value="">Repl. (any)</option><option value="5">5/5 only</option><option value="4">4/5 and up</option><option value="3">3/5 and up</option><option value="2">2/5 and up</option></select>' +
+      '<button id="atk-reset">Reset</button>' +
+      '<span class="stats" id="atk-stats"></span>';
+    table.parentNode.insertBefore(toolbar, table);
+
+    // Populate categories from existing rows
+    const cats = new Set();
+    rows.forEach(r => {
+      const txt = (r.cells[cols.cat] || r.cells[cols.category] || {}).textContent;
+      if (txt && txt.trim()) cats.add(txt.trim());
+    });
+    const catSel = toolbar.querySelector("#atk-cat");
+    [...cats].sort().forEach(c => {
+      const o = document.createElement("option");
+      o.value = c.toLowerCase();
+      o.textContent = c;
+      catSel.appendChild(o);
+    });
+
+    // Populate threat models from existing rows
+    const threats = new Set();
+    rows.forEach(r => {
+      const txt = (r.cells[cols.threat] || {}).textContent;
+      if (txt && txt.trim()) threats.add(txt.trim());
+    });
+    const threatSel = toolbar.querySelector("#atk-threat");
+    [...threats].sort().forEach(t => {
+      const o = document.createElement("option");
+      o.value = t.toLowerCase();
+      o.textContent = t;
+      threatSel.appendChild(o);
+    });
+
+    // Populate venues from existing rows
+    const venues = new Set();
+    rows.forEach(r => {
+      const txt = (r.cells[cols.venue] || {}).textContent;
+      if (txt && txt.trim()) venues.add(txt.trim());
+    });
+    const venueSel = toolbar.querySelector("#atk-venue");
+    [...venues].sort().forEach(v => {
+      const o = document.createElement("option");
+      o.value = v.toLowerCase();
+      o.textContent = v;
+      venueSel.appendChild(o);
+    });
+
+    let sortCol = null, sortDir = 0;
+
+    function detectVal(r) { return (r.cells[cols.detect] || {}).textContent?.trim().toLowerCase() || ""; }
+    function threatVal(r) { return (r.cells[cols.threat] || {}).textContent?.trim().toLowerCase() || ""; }
+    function venueVal(r)  { return (r.cells[cols.venue] || {}).textContent?.trim().toLowerCase() || ""; }
+    function catVal(r)    { return ((r.cells[cols.cat] || r.cells[cols.category] || {}).textContent?.trim() || "").toLowerCase(); }
+    function codeVal(r)   { return (r.cells[cols.code] || {}).textContent?.trim().toLowerCase() || ""; }
+    function replVal(r)   { const t = (r.cells[cols.repl] || {}).textContent?.trim() || ""; const m = t.match(/(\\d+)/); return m ? parseInt(m[1]) : 0; }
+
+    function apply() {
+      const q = toolbar.querySelector("#atk-q").value.trim().toLowerCase();
+      const fd = toolbar.querySelector("#atk-detect").value.toLowerCase();
+      const ft = toolbar.querySelector("#atk-threat").value.toLowerCase();
+      const fv = toolbar.querySelector("#atk-venue").value.toLowerCase();
+      const fc = toolbar.querySelector("#atk-cat").value;
+      const fk = toolbar.querySelector("#atk-code").value;
+      const fr = toolbar.querySelector("#atk-repl").value;
+
+      let visible = 0;
+      rows.forEach(r => {
+        const text = r.textContent.toLowerCase();
+        const cv = codeVal(r);
+        const isNoCode = !cv || cv === "no" || cv === "—" || cv === "-" || cv === "not yet";
+        let ok = true;
+        if (q && !text.includes(q)) ok = false;
+        if (fd && detectVal(r) !== fd) ok = false;
+        if (ft && threatVal(r) !== ft) ok = false;
+        if (fv && venueVal(r) !== fv) ok = false;
+        if (fc && catVal(r) !== fc) ok = false;
+        if (fk === "yes" && isNoCode) ok = false;
+        if (fk === "no" && !isNoCode) ok = false;
+        if (fr && replVal(r) < parseInt(fr)) ok = false;
+        r.style.display = ok ? "" : "none";
+        if (ok) visible++;
+      });
+
+      if (sortCol !== null && sortDir !== 0) {
+        const visibleRows = rows.filter(r => r.style.display !== "none");
+        visibleRows.sort((a, b) => {
+          const av = (a.cells[sortCol] || {}).textContent?.trim() || "";
+          const bv = (b.cells[sortCol] || {}).textContent?.trim() || "";
+          const an = parseFloat(av), bn = parseFloat(bv);
+          if (!isNaN(an) && !isNaN(bn)) return (an - bn) * sortDir;
+          return av.localeCompare(bv) * sortDir;
+        });
+        visibleRows.forEach(r => tbody.appendChild(r));
+      }
+
+      toolbar.querySelector("#atk-stats").textContent = visible + " of " + rows.length + " attacks";
+    }
+
+    headers.forEach((th, i) => {
+      th.addEventListener("click", () => {
+        if (sortCol === i) {
+          sortDir = sortDir === 1 ? -1 : sortDir === -1 ? 0 : 1;
+          if (sortDir === 0) sortCol = null;
+        } else { sortCol = i; sortDir = 1; }
+        headers.forEach(h => h.classList.remove("sort-asc", "sort-desc"));
+        if (sortDir === 1) th.classList.add("sort-asc");
+        if (sortDir === -1) th.classList.add("sort-desc");
+        apply();
+      });
+    });
+
+    toolbar.addEventListener("input", apply);
+    toolbar.addEventListener("change", apply);
+    toolbar.querySelector("#atk-reset").addEventListener("click", () => {
+      toolbar.querySelectorAll("input, select").forEach(el => el.value = "");
+      sortCol = null; sortDir = 0;
+      headers.forEach(h => h.classList.remove("sort-asc", "sort-desc"));
+      apply();
+    });
+
+    apply();
+    return true;
+  }
+
+  // Retry until table is in the DOM (handles SPA / late hydration)
+  let tries = 0;
+  const t = setInterval(() => {
+    if (enhance() || ++tries > 40) clearInterval(t);
+  }, 200);
+})();
+`}</script>
+

@@ -1,0 +1,107 @@
+---
+title: 'SNI5GECT Uplink SUPI Extraction'
+description: 'Third-party sniffing of pre-authentication 5G NR uplink messages to extract subscriber identity'
+---
+
+<Info>
+**Ease: 4/5** | **Layer: PHY/RRC** | **Replicable: Yes** | **Extra HW: None (uses B210)**
+</Info>
+
+## Paper
+
+| Field | Value |
+|---|---|
+| **Title** | "SNI5GECT: A Practical Approach to Inject aNRchy into 5G NR" |
+| **Authors** | Shijie Luo, Matheus Garbelini, Sudipta Chattopadhyay, Jianying Zhou |
+| **Affiliation** | Singapore University of Technology and Design (SUTD) |
+| **Venue** | USENIX Security 2025 |
+| **Date** | August 13-15, 2025 (Seattle, WA) |
+| **PDF** | [USENIX](https://www.usenix.org/system/files/usenixsecurity25-luo-shijie.pdf) |
+| **CVE** | GSMA Coordinated Vulnerability Disclosure assigned |
+
+## Source Code
+
+<Tip>
+Full open-source toolkit available with artifact evaluation badges!
+</Tip>
+
+| Resource | URL |
+|---|---|
+| **Main Repository** | [asset-group/Sni5Gect-5GNR-sniffing-and-exploitation](https://github.com/asset-group/Sni5Gect-5GNR-sniffing-and-exploitation) |
+| **Zenodo Artifacts** | [zenodo.org/records/15601773](https://zenodo.org/records/15601773) |
+| **Components** | Scheduler, SSB sync, UE tracker, gNB DL/UL workers, Wireshark integration |
+
+## Attack Mechanism
+
+Unlike SUCI-catcher (which requires a rogue gNB), SNI5GECT works as a **passive third-party observer** that sniffs pre-authentication uplink messages.
+
+```
+Legitimate gNB                    Victim UE
+      |                               |
+      |<===== Pre-auth messages ======>|
+      |                               |
+      |     [Attacker B210]           |
+      |     Passive sniffing          |
+      |     of uplink channel         |
+      |                               |
+      |  Captures:                    |
+      |  - RRCSetupRequest            |
+      |  - Registration Request       |
+      |  - UE identity (>70% success) |
+```
+
+### Key Innovation
+- Does **NOT** require operating a rogue base station
+- Sniffs both downlink AND uplink pre-auth messages
+- Can also **inject** downlink messages (separate capability)
+
+### Success Rates
+| Operation | Rate | Range |
+|---|---|---|
+| Uplink sniffing accuracy | >80% | 20m |
+| Downlink sniffing accuracy | >80% | 20m |
+| Injection success | 70-90% | 20m |
+| UE identity extraction | >70% | 20m |
+
+## Replication Guide
+
+### Setup (Minimal)
+```
+[USRP B210] ──USB3──> [PC running Sni5Gect]
+     │
+  [Antenna]
+     │
+  ~~~OTA~~~  (passive observation of existing 5G cell)
+     │
+[Legitimate gNB]  ←──→  [Victim UE]
+```
+
+### Steps
+1. Clone repo: `git clone https://github.com/asset-group/Sni5Gect-5GNR-sniffing-and-exploitation`
+2. Build with Docker support (provided)
+3. Configure for target 5G NR frequency/band
+4. Run in sniffing mode — captures pre-auth MAC-NR messages
+5. Use Wireshark integration to analyze captured identities
+6. (Optional) Switch to injection mode for active attacks
+
+### Why No Extra Hardware
+- Pure passive reception for sniffing mode
+- B210 is explicitly supported by the toolkit
+- No PA needed (not transmitting)
+- No duplexer needed (RX only for sniffing)
+
+## Comparison with Other IMSI Catchers
+
+| Feature | SUCI-Catcher | Passive NSA | ToRPEDO | SNI5GECT |
+|---|---|---|---|---|
+| Requires rogue gNB | Yes | No | No | **No** |
+| Works on 5G-SA | Yes | No | Partial | **Yes** |
+| Active/Passive | Active | Passive | Semi-active | **Passive** |
+| Uplink capture | No | No | No | **Yes** |
+| Source code | Artifacts | LTESniffer | Withheld | **Full repo** |
+| Year | 2021 | 2023 | 2019 | **2025** |
+
+## References
+1. Luo et al., "SNI5GECT", USENIX Security '25
+2. Garbelini et al., "5GHOUL", 2023 (same research group)
+3. 3GPP TS 38.331: NR RRC protocol specification

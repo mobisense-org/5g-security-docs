@@ -1,0 +1,45 @@
+---
+title: "RRC Signaling Storm"
+description: "DCI injection triggering massive Random Access collisions that render the gNB 95% unavailable through an RRC signaling storm."
+---
+
+# RRC Signaling Storm
+
+## Overview
+
+This attack exploits the unprotected nature of Downlink Control Information (DCI) to inject spoofed scheduling grants that trick many UEs into initiating Random Access simultaneously. The resulting collision storm overwhelms the gNB's RACH processing, causing up to 95% unavailability.
+
+**Ease of execution: 3/5** -- requires precise DCI spoofing capability and timing knowledge.
+
+## Key Reference
+
+- **Reference:** arXiv 2025
+- **Result:** 132 Msg3 transmissions per second, rendering the gNB 95% unavailable
+
+## Attack Mechanism
+
+1. The attacker crafts and transmits spoofed DCI messages on the PDCCH that appear to schedule uplink resources for multiple UEs.
+2. Targeted UEs interpret these as legitimate scheduling grants and initiate Random Access procedures (contention-based).
+3. The simultaneous Msg1/Msg3 transmissions from many UEs create massive collisions on PRACH and PUSCH resources.
+4. The gNB becomes overwhelmed attempting to resolve the contention, effectively denying service.
+
+At a measured rate of **132 Msg3 per second**, the gNB scheduler and RACH handler are saturated, dropping legitimate access attempts.
+
+## Hardware Requirements
+
+| Component | Details |
+|-----------|---------|
+| SDR | USRP B210 or N310 |
+| Software | Custom DCI injection tool (OAI-based or GNU Radio) |
+| Timing | Must synchronize to target cell's frame timing |
+| Power Amplifier | May be needed to overpower legitimate PDCCH |
+
+## Why It Works
+
+DCI on the PDCCH is not integrity-protected in 5G NR. While DCI is scrambled with an RNTI, the scrambling is not cryptographic and can be predicted or brute-forced for broadcast/common RNTIs (SI-RNTI, P-RNTI, RA-RNTI).
+
+## Mitigations
+
+- PDCCH integrity protection (not yet standardized)
+- Anomaly detection on Random Access collision rates
+- UE-side validation of DCI plausibility

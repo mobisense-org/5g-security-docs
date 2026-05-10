@@ -1,0 +1,37 @@
+---
+title: 'Overview'
+description: "Four methods for tracking 5G subscriber locations, ranging from trivial passive C-RNTI monitoring to operator-side techniques requiring infrastructure access."
+---
+
+# Location Tracking
+
+## Overview
+
+Despite 5G's privacy improvements (SUPI concealment via SUCI), several location tracking methods remain viable. These range from completely passive radio monitoring to techniques requiring operator-level access.
+
+## Methods
+
+| # | Method | Ease | Type | Key Reference |
+|---|--------|------|------|---------------|
+| 1 | [C-RNTI Tracking](/attacks/11-location-tracking/crnti-tracking) | 5/5 | Passive | arXiv 2409.17700 (Sep 2024) |
+| 2 | [Paging-Based Location](/attacks/11-location-tracking/paging-location) | 4/5 | Semi-passive | ToRPEDO, NDSS 2019 |
+| 3 | Beam-Based Tracking | 2/5 | Passive | Exploits beam management |
+| 4 | Operator-Side Tracking | 1/5 | Infrastructure | Requires core network access |
+
+## Why Location Tracking Persists in 5G
+
+- **C-RNTI** is assigned in cleartext during RRC setup and visible in every scheduled transmission
+- **Paging occasions** are deterministically computed from the subscriber's 5G-S-TMSI, creating a side channel
+- **Beam indices** in mmWave deployments correlate with physical direction, enabling angular tracking
+- **SUCI** protects the permanent identity but does not prevent radio-layer identifiers from leaking location
+
+## Threat Model
+
+- **Passive attacker (C-RNTI):** Only needs a receiver -- no transmission, no interaction with the network
+- **Semi-passive (paging):** Needs to trigger paging events (e.g., by calling/messaging the target)
+- **Active (beam):** May need to provoke beam switching events
+- **Insider (operator):** Has direct access to location databases and signaling traces
+
+## Hardware for Passive Tracking
+
+A passive C-RNTI tracker requires only a receive-capable SDR (USRP B210, even RTL-SDR with appropriate bandwidth) and open-source 5G sniffing software. No power amplifier or transmission capability is needed.

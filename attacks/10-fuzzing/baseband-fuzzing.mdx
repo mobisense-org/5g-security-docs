@@ -1,0 +1,50 @@
+---
+title: "Baseband Emulation & Fuzzing (2025)"
+description: "The 2025 wave of commercial-baseband fuzzing — Stateful Analysis, BaseBridge, LLFuzz, and FirmState — that closed the gap between emulation and over-the-air testing."
+---
+
+## Why This Cluster Matters
+
+For years, baseband fuzzing was bottlenecked by two problems:
+
+1. **Emulation lacked realism** — Shannon/MediaTek emulators couldn't run the full protocol state machine, so fuzzers found shallow bugs only.
+2. **Over-the-air testing was slow** — running mutations through real radios is orders of magnitude slower than emulation and hard to reproduce.
+
+In 2025 four papers tackled these gaps, collectively reopening commercial baseband as a productive bug-hunting target.
+
+## The Four Papers
+
+| Paper | Venue | Contribution |
+|---|---|---|
+| **Stateful Analysis and Fuzzing of Commercial Baseband Firmware** | IEEE S&P 2025 | First scalable stateful fuzzer for commercial basebands; protocol-state coverage instead of code coverage |
+| **BaseBridge** | IEEE S&P 2025 | Bridges emulation and over-the-air testing — bugs found in emulation are auto-validated against real radios |
+| **LLFuzz** | 2025 | Over-the-air dynamic testing focused on lower-layer (PHY/MAC/RLC) protocol handling |
+| **FirmState** | WiSec 2025 | Adds protocol-state semantics to Shannon (Samsung Exynos) baseband emulation |
+
+## What's Actually New
+
+- **Stateful analysis** at the firmware level: fuzzers now reason about RRC connection states, NAS security context, and registration state simultaneously — not just message syntax.
+- **Hybrid emulation + OTA pipelines**: BaseBridge replays interesting emulator inputs through a real B210 + UE so a software-found "bug" can be confirmed/denied on hardware in seconds.
+- **Lower-layer focus**: LLFuzz attacks PHY/MAC/RLC, where most existing fuzzers don't reach because they require precise timing.
+- **Vendor coverage**: FirmState specifically targets Samsung Shannon basebands, complementing the Qualcomm/MediaTek-heavy 5GHOUL line of work.
+
+## Threat Model
+
+Same as 5GHOUL: attacker operates a rogue gNB (USRP B210 + srsRAN/Open5GS) or runs the firmware in emulation. No SIM, no auth — bugs land before the security context is established.
+
+## Reproduction Notes
+
+- **FirmState** and the **Stateful Analysis** paper publish enough detail to rebuild against open Shannon dumps; expect significant reverse-engineering effort.
+- **BaseBridge** workflow is the most practical entry point: emulate cheaply, validate selectively over the air.
+- **LLFuzz** requires SDR + a target UE; setup is closer to 5GHOUL's complexity.
+
+## Why You Should Care
+
+If you tracked 5GHOUL (Dec 2023) and 5GBaseChecker (Aug 2024) in our [main fuzzing list](/attacks/10-fuzzing/overview), this 2025 wave is the natural follow-up. Expect a fresh round of CVE-bearing baseband bugs disclosed through 2026 — these tools are the engine.
+
+## References
+
+- Stateful Analysis and Fuzzing of Commercial Baseband Firmware, IEEE S&P 2025.
+- BaseBridge: Bridging the Gap between Emulation and Over-The-Air Testing for Cellular Baseband Firmware, IEEE S&P 2025.
+- LLFuzz: An Over-the-Air Dynamic Testing Framework for Cellular Baseband Lower Layers, 2025.
+- FirmState: Bringing Cellular Protocol States to Shannon Baseband Emulation, WiSec 2025.

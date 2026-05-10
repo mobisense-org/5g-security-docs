@@ -1,0 +1,37 @@
+---
+title: "SNI5GECT"
+description: "Third-party sniffing and injection attack on 5G NR that operates without a rogue gNB, achieving over 80% sniff rate and 70-90% injection rate at 20 meters."
+---
+
+## Summary
+
+SNI5GECT demonstrates that a third-party attacker -- one who does not operate a rogue base station -- can passively sniff 5G NR pre-authentication messages and then inject crafted responses into ongoing connections. This breaks the assumption that injection attacks require a full rogue gNB, significantly lowering operational complexity. Public GitHub code and Zenodo artifacts are available.
+
+## Paper
+
+| Field | Details |
+|---|---|
+| **Authors** | Luo et al. |
+| **Venue** | USENIX Security Symposium, August 2025 |
+| **GitHub** | [asset-group/Sni5Gect-5GNR-sniffing-and-exploitation](https://github.com/asset-group/Sni5Gect-5GNR-sniffing-and-exploitation) |
+| **Artifacts** | Zenodo archived artifacts |
+| **Sniff Rate** | Over 80% |
+| **Injection Rate** | 70-90% at 20 m distance |
+| **SDR** | USRP B210 |
+| **Ease of Replication** | 4/5 |
+
+## Attack Mechanism
+
+SNI5GECT exploits the fact that certain 5G NR messages during initial access are neither encrypted nor integrity-protected. The attacker passively monitors the PRACH and Msg1-Msg4 exchanges of the RACH procedure. By decoding the timing advance and resource allocation from Msg2 (RAR), the attacker predicts where and when the UE's subsequent messages will appear. It then injects crafted Msg4 or RRC messages on the predicted resources. Because the UE has not yet established a security context, it accepts the injected messages as legitimate.
+
+## Replication Notes
+
+- **Hardware**: A single USRP B210 is sufficient for both sniffing and injection. No PA is required at short range (20 m), though one may be needed at greater distances.
+- **Software**: The GitHub repository provides the full tool chain. Zenodo artifacts include pre-recorded IQ samples for validation.
+- **Setup**: Point the B210 at a live 5G NR cell or a lab gNB (srsRAN/OAI). The tool handles synchronization, RACH monitoring, and injection timing automatically.
+- **Legal Note**: Active injection against commercial cells is illegal in most jurisdictions. Use only in shielded lab environments or with explicit operator authorization.
+
+## References
+
+- Luo et al., "SNI5GECT: 5G NR Sniffing and Exploitation," USENIX Security Symposium, August 2025.
+- GitHub: [asset-group/Sni5Gect-5GNR-sniffing-and-exploitation](https://github.com/asset-group/Sni5Gect-5GNR-sniffing-and-exploitation)

@@ -1,0 +1,28 @@
+---
+title: 'Overview'
+description: "Overview of attacks exploiting the window before encryption and mutual authentication are established in 5G NR, including SNI5GECT, 5GHOUL, and CONSET."
+---
+
+## Summary
+
+Pre-authentication injection attacks target the critical window in 5G NR connection setup where messages are exchanged before the security context (encryption and integrity protection) is fully established. During this phase, certain RRC and NAS messages are sent in the clear or without integrity protection, creating opportunities for sniffing, injection, and fuzzing.
+
+## Sub-Attacks
+
+| Attack | Authors / Group | Venue | GitHub | Ease |
+|---|---|---|---|---|
+| [SNI5GECT](/attacks/06-pre-auth-injection/sni5gect) | Luo et al. | USENIX Security, Aug 2025 | [asset-group/Sni5Gect-5GNR-sniffing-and-exploitation](https://github.com/asset-group/Sni5Gect-5GNR-sniffing-and-exploitation) | 4/5 |
+| [5GHOUL](/attacks/06-pre-auth-injection/5ghoul) | Garbelini et al. (SUTD) | Dec 2023 + IEEE 2024 | [asset-group/5ghoul-5g-nr-attacks](https://github.com/asset-group/5ghoul-5g-nr-attacks) (661 stars, Docker) | 5/5 |
+| [CONSET](/attacks/06-pre-auth-injection/conset) | Hu et al. (UB + Texas A&M) | USENIX Security 2026 (accepted) | Not yet public | 2/5 |
+
+## Key Observations
+
+These three attacks represent an evolution in pre-auth exploitation. 5GHOUL (2023) demonstrated that 14 or more pre-authentication vulnerabilities exist in commercial Qualcomm and MediaTek 5G modems, exploitable without a SIM card. SNI5GECT (2025) showed that a third-party attacker can passively sniff and then actively inject into ongoing connections without operating a rogue gNB. CONSET (2026) applies LLM-based semantic analysis to 3GPP specifications to systematically discover new violations, yielding 3 high-severity CVEs across 41 chipsets and over 466 phone models.
+
+All three attacks exploit messages sent before encryption and authentication are established, making them fundamentally difficult to mitigate without protocol-level changes.
+
+## References
+
+- Luo et al., "SNI5GECT," USENIX Security, August 2025.
+- M. K. Garbelini et al., "5GHOUL," December 2023 / IEEE, 2024.
+- Hu et al., "CONSET," USENIX Security, 2026 (accepted).

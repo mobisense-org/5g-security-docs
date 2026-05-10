@@ -1,0 +1,45 @@
+---
+title: '5G Security Attacks'
+description: 'Catalog of 5G security attacks (2023-2026), backed by papers, with replication assessments'
+---
+
+All attacks listed here are from **2023 or newer**. Each includes paper references, source code (where available), and replicability assessment against our lab hardware (3x B210, 1x N310, Benetel 550/640, 8+ phones, srsRAN 5G).
+
+<CardGroup cols={3}>
+  <Card title="IMSI/SUPI Catching" icon="satellite-dish" href="/attacks/01-imsi-catching/overview">
+    Passive sniffing, uplink extraction
+  </Card>
+  <Card title="Fake Base Station" icon="tower-broadcast" href="/attacks/02-fake-base-station/overview">
+    SIB1 spoofing, MITM relay, cell reselection
+  </Card>
+  <Card title="Downgrade" icon="arrow-down" href="/attacks/03-downgrade/overview">
+    5G-to-2G bidding-down
+  </Card>
+  <Card title="Signal Overshadowing" icon="wave-square" href="/attacks/05-signal-overshadowing/overview">
+    5Gone uplink overshadowing (2026)
+  </Card>
+  <Card title="Pre-Auth Injection" icon="syringe" href="/attacks/06-pre-auth-injection/overview">
+    SNI5GECT, 5GHOUL, CONSET
+  </Card>
+  <Card title="Denial of Service" icon="ban" href="/attacks/07-dos/overview">
+    PRACH/RACH jam, RRC flood, emergency spoof
+  </Card>
+  <Card title="Jamming" icon="signal" href="/attacks/08-jamming/overview">
+    Barrage jamming
+  </Card>
+  <Card title="Protocol Fuzzing" icon="bug" href="/attacks/10-fuzzing/overview">
+    RANsacked, 5GBaseChecker, Open5GS CVEs
+  </Card>
+  <Card title="Location Tracking" icon="location-dot" href="/attacks/11-location-tracking/overview">
+    C-RNTI tracking, paging location
+  </Card>
+  <Card title="Battery Drain" icon="battery-quarter" href="/attacks/13-battery-drain/overview">
+    MAC CE spoofing
+  </Card>
+  <Card title="Network Slicing" icon="layer-group" href="/attacks/14-20-specialized/network-slicing">
+    Rogue gNB slice manipulation (2025)
+  </Card>
+  <Card title="O-RAN" icon="network-wired" href="/attacks/14-20-specialized/oran-supply-chain">
+    Interface exploitation, RIC compromise
+  </Card>
+</CardGroup>

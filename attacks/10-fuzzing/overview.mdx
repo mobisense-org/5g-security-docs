@@ -1,0 +1,42 @@
+---
+title: 'Overview'
+description: "Seven fuzzing tools and research projects targeting 5G protocol implementations, collectively responsible for hundreds of discovered vulnerabilities and CVEs."
+---
+
+# Protocol Fuzzing
+
+## Overview
+
+Protocol fuzzing systematically generates malformed, unexpected, or random protocol messages to find parsing bugs, crashes, and logic errors in 5G implementations. This category has produced the most CVEs of any 5G security research area.
+
+## Tools and Papers
+
+| # | Tool/Paper | Venue | Year | Key Result |
+|---|-----------|-------|------|------------|
+| 1 | [RANsacked](/attacks/10-fuzzing/ransacked) | CCS | Nov 2024 | 119 vulns, 97 CVEs across 7 implementations |
+| 2 | [5GBaseChecker](/attacks/10-fuzzing/5gbasechecker) | USENIX Sec | Aug 2024 | 13 exploitable 0-days in 17 commercial basebands |
+| 3 | 5GReasoner | CCS | 2019 | NAS-layer property verification and attack discovery |
+| 4 | LTEFuzz | IEEE S&P | 2019 | First systematic LTE/5G NAS fuzzer |
+| 5 | DoLTEst | USENIX Sec | 2022 | Stateful NAS/RRC testing with 26 new findings |
+| 6 | [Open5GS Vulnerabilities](/attacks/10-fuzzing/open5gs-vulns) | MDPI | Jan 2024 | SBI/API vulnerabilities in Open5GS |
+| 7 | FivGeeFuzz / SAGE-5GC | Various | Feb 2026 | Next-generation 5G core fuzzing |
+
+## Common Approach
+
+Most 5G fuzzers follow this pattern:
+
+1. **Model the protocol:** Build a state machine of the target protocol (NAS, RRC, NGAP, GTP, SBI).
+2. **Generate mutations:** Create malformed messages by flipping bits, truncating fields, injecting invalid IEs, or violating ASN.1 encoding rules.
+3. **Send and monitor:** Deliver mutations to the target implementation and monitor for crashes, hangs, memory corruption, or unexpected state transitions.
+4. **Triage:** Classify findings by severity (crash = high, unexpected response = medium, etc.).
+
+## Why 5G Is Particularly Fuzzable
+
+- **ASN.1 PER encoding** is complex and error-prone to implement
+- **Multiple independent implementations** (srsRAN, OAI, Open5GS, Magma, free5GC) each have unique bugs
+- **Large protocol surface** -- NAS alone has dozens of message types with hundreds of optional IEs
+- **Open-source availability** makes white-box and grey-box fuzzing straightforward
+
+## Getting Started
+
+The easiest entry point is fuzzing Open5GS or srsRAN in a local Docker environment. RANsacked's ASNFuzzGen tool can auto-generate fuzzers from 3GPP ASN.1 specifications.

@@ -1,0 +1,26 @@
+---
+title: 'SBA / API Attacks'
+description: 'Rank #17 — REST API injection, token abuse, control plane flood on 5G core'
+---
+
+## Sub-Attacks
+
+| Attack | Paper | Venue | Date | Ease | Repl. |
+|---|---|---|---|---|---|
+| REST API injection | "Penetration Testing of 5G Core Network Web Technologies" | arXiv 2403.01871 | Mar 2024 | 3/5 | Partial |
+| NRF/AMF token abuse | "Cross-Service Token: Finding Attacks in 5G Core" | arXiv 2509.08992 | Sep 2025 | 3/5 | Partial |
+| Control plane signaling flood | "5G Core Network Control Plane: Security Challenges" | ScienceDirect | Oct 2024 | 3/5 | Partial |
+
+## REST API Injection
+
+5G Service-Based Architecture uses HTTP/2 REST APIs between Network Functions. Open5GS exposes these APIs, and testing reveals:
+- Missing TLS encryption on SBI (Service-Based Interface)
+- No rate-limiting on AMF/NRF requests (DDoS exposure)
+- SQL/NoSQL injection on database interfaces
+- Input validation gaps
+
+**Replication:** Use standard pentest tools (Burp Suite, OWASP ZAP) against your Open5GS REST APIs. No SDR hardware needed — purely network-level testing.
+
+## Token Abuse (FivGeeFuzz)
+
+Grammar-based fuzzing framework discovers flaws in 5G core SBI where tokens can be reused across services, enabling unauthorized access between NFs.

@@ -1,0 +1,36 @@
+---
+title: "CONSET (2026)"
+description: "LLM-based semantic violation testing framework for 3GPP specifications that discovered 3 high-severity CVEs across 41 chipsets and over 466 phone models."
+---
+
+## Summary
+
+CONSET is a novel testing methodology that uses large language models to systematically analyze 3GPP specifications for semantic violations in 5G NR implementations. Rather than fuzzing random inputs, CONSET generates test cases that violate the intended semantics of protocol specifications, uncovering logic bugs that traditional fuzzers miss. The approach yielded 3 high-severity CVEs affecting 41 chipsets and over 466 phone models. Source code is not yet publicly available.
+
+## Paper
+
+| Field | Details |
+|---|---|
+| **Authors** | Hu et al. |
+| **Affiliations** | University at Buffalo, Texas A&M University |
+| **Venue** | USENIX Security 2026 (accepted) |
+| **CVEs Found** | 3 high-severity |
+| **Affected Chipsets** | 41 |
+| **Affected Phones** | Over 466 models |
+| **Code** | Not yet publicly released |
+| **Ease of Replication** | 2/5 |
+
+## Attack Mechanism
+
+CONSET parses 3GPP specification documents (TS 38.331, TS 24.501, etc.) using an LLM pipeline that extracts protocol constraints, preconditions, and expected behaviors. It then generates test cases that satisfy syntactic validity but violate semantic requirements -- for example, sending a valid-looking RRC message with field combinations that the spec explicitly prohibits under certain conditions. These semantically-invalid messages are injected during the pre-authentication phase of 5G NR connection setup. Because modem firmware often implements only syntactic validation (ASN.1 decoding) without full semantic checking, many test cases trigger undefined behavior, crashes, or security-relevant state machine violations.
+
+## Replication Notes
+
+- **Code Availability**: Source code is not yet public as of the paper's acceptance at USENIX Security 2026. The authors may release it post-publication.
+- **LLM Dependency**: The framework relies on LLM-based spec parsing, requiring access to a capable model (the paper does not specify which LLM was used).
+- **Hardware**: Standard rogue gNB setup (B210 + srsRAN/OAI) for injecting generated test cases.
+- **Difficulty**: Even with code access, replication requires deep understanding of 3GPP protocol semantics and the ability to interpret LLM-generated test cases. The 2/5 ease rating reflects the lack of public tooling and the complexity of the LLM pipeline.
+
+## References
+
+- Hu et al., "CONSET: LLM-Based Semantic Violation Testing of 3GPP Specifications," USENIX Security, 2026 (accepted).
