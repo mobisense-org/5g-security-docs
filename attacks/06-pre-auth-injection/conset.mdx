@@ -1,36 +1,63 @@
 ---
 title: "CONSET (2026)"
-description: "LLM-based semantic violation testing framework for 3GPP specifications that discovered 3 high-severity CVEs across 41 chipsets and over 466 phone models."
+description: "LLM-based semantic-violation testing framework for 3GPP specifications. 3 high-severity CVEs across 41 chipsets and 466+ phone models."
 ---
 
 ## Summary
 
-CONSET is a novel testing methodology that uses large language models to systematically analyze 3GPP specifications for semantic violations in 5G NR implementations. Rather than fuzzing random inputs, CONSET generates test cases that violate the intended semantics of protocol specifications, uncovering logic bugs that traditional fuzzers miss. The approach yielded 3 high-severity CVEs affecting 41 chipsets and over 466 phone models. Source code is not yet publicly available.
+CONSET (USENIX Security '26) uses LLMs to parse 3GPP specifications, extract semantic constraints, and generate test cases that **violate the intended semantics** of the protocol — not just the syntax. Where classical fuzzers (5GHOUL, 5GBaseChecker) catch parser bugs, CONSET catches **logic** bugs: messages that are syntactically valid but semantically illegal under the current protocol state. The framework discovered 3 high-severity CVEs affecting 41 chipsets and over 466 phone models. Source code is not yet publicly available.
 
 ## Paper
 
 | Field | Details |
 |---|---|
-| **Authors** | Hu et al. |
-| **Affiliations** | University at Buffalo, Texas A&M University |
+| **Authors** | Hu et al. (University at Buffalo + Texas A&M) |
 | **Venue** | USENIX Security 2026 (accepted) |
-| **CVEs Found** | 3 high-severity |
+| **CVEs Found** | 3 high-severity (CVE IDs pending public disclosure) |
 | **Affected Chipsets** | 41 |
-| **Affected Phones** | Over 466 models |
+| **Affected Phones** | 466+ models |
 | **Code** | Not yet publicly released |
 | **Ease of Replication** | 2/5 |
 
+## Threat Model
+
+| | |
+|---|---|
+| **Attacker** | Rogue gNB delivering semantically-crafted pre-auth messages |
+| **Victim** | UE modem (baseband firmware) |
+| **Position** | Within radio range of victim UE |
+| **Capability** | Standard rogue-gNB infrastructure + LLM-generated payloads |
+| **Pre-auth?** | Yes — same delivery channel as 5GHOUL but smarter content |
+| **Novelty** | The **content** is novel, not the delivery — bugs depend on protocol *state*, not parser quirks |
+
 ## Attack Mechanism
 
-CONSET parses 3GPP specification documents (TS 38.331, TS 24.501, etc.) using an LLM pipeline that extracts protocol constraints, preconditions, and expected behaviors. It then generates test cases that satisfy syntactic validity but violate semantic requirements -- for example, sending a valid-looking RRC message with field combinations that the spec explicitly prohibits under certain conditions. These semantically-invalid messages are injected during the pre-authentication phase of 5G NR connection setup. Because modem firmware often implements only syntactic validation (ASN.1 decoding) without full semantic checking, many test cases trigger undefined behavior, crashes, or security-relevant state machine violations.
+1. **Spec ingestion (offline)**: an LLM pipeline reads 3GPP TS 38.331 (RRC), 24.501 (NAS), and related specs. It extracts preconditions, postconditions, and forbidden combinations.
+2. **Test generation**: the framework generates candidate messages that are syntactically valid (pass ASN.1 PER decode) but violate at least one semantic constraint — e.g., a `RRCReconfiguration` with a field combination that the spec explicitly disallows from the current RRC state.
+3. **Delivery (online)**: same channel as 5GHOUL — a rogue gNB attracts the UE and sends the generated messages in the pre-auth window.
+4. **Oracle**: modems crash, hang, or transition to undefined states. Many implementations only check syntax (ASN.1 PER) and skip semantic validation, so semantically-illegal payloads slip through.
 
-## Replication Notes
+## Replication
 
-- **Code Availability**: Source code is not yet public as of the paper's acceptance at USENIX Security 2026. The authors may release it post-publication.
-- **LLM Dependency**: The framework relies on LLM-based spec parsing, requiring access to a capable model (the paper does not specify which LLM was used).
-- **Hardware**: Standard rogue gNB setup (B210 + srsRAN/OAI) for injecting generated test cases.
-- **Difficulty**: Even with code access, replication requires deep understanding of 3GPP protocol semantics and the ability to interpret LLM-generated test cases. The 2/5 ease rating reflects the lack of public tooling and the complexity of the LLM pipeline.
+- **Code not public** as of acceptance. The authors may release after publication.
+- **LLM dependency**: the spec-parsing step requires a capable LLM (paper doesn't specify which); reproducing the test corpus from scratch is non-trivial.
+- **Delivery hardware**: standard rogue gNB (B210 + srsRAN/Open5GS) — same as 5GHOUL.
+- **Practical replication path before code release**: read the paper, manually identify a few semantic violations in TS 38.331, encode them, and deliver via 5GHOUL's infrastructure. You'll reproduce a subset but not the full corpus.
+
+## RF Signature (passive RF + AI)
+
+Same rogue-gNB signature as 5GHOUL — a passive sniffer with PCI/SIB-fingerprint AI catches the **delivery infrastructure** regardless of the payload smartness. The semantic payloads themselves are harder to flag with simple anomaly detection because they parse cleanly:
+
+- **Pre-auth RRC content sequences** are the discriminator. AI angle: sequence model trained on legitimate-operator RRC traces vs. CONSET-style state-violating sequences. This is roughly the same problem class as protocol-aware IDS — feasible but harder than catching syntactic anomalies.
+- The novel research question: **can passive RF + AI detect semantic violations the modem itself misses?** Open problem — exactly the kind of work the lab would want to attempt.
+
+## Detection (gNB / core side)
+
+- Stricter spec-compliance validation at the gNB before forwarding pre-auth content (effectively, build the spec-aware checks the modem skipped).
+- Anomaly detection on per-UE RRC message sequences at the AMF.
 
 ## References
 
-- Hu et al., "CONSET: LLM-Based Semantic Violation Testing of 3GPP Specifications," USENIX Security, 2026 (accepted).
+1. Hu et al., "CONSET: Semantics Over Syntax — Uncovering Pre-Authentication 5G Baseband Vulnerabilities," USENIX Security 2026 (accepted).
+2. Announcement: [TAMU CSE blog post (Dec 2025)](https://success.cse.tamu.edu/2025/12/20/new-5g-security-research-conset-will-appear-in-usenix-security26/).
+3. Related: 5GHOUL (same attack delivery, syntactic fuzz) and 5GBaseChecker (state-machine fuzz).

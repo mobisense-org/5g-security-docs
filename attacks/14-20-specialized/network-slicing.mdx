@@ -1,24 +1,64 @@
 ---
 title: 'Network Slicing Attacks'
-description: 'Rank #15 — Slice isolation breach, rogue gNB slice manipulation, RL side-channel'
+description: 'Rank #10 — Rogue-gNB NSSAI manipulation, slice isolation breach, RL side-channel inference. Mixed RF and core-side attack surface.'
 ---
 
-## Sub-Attacks
+## Summary
 
-| Attack | Paper | Venue | Date | Ease | Repl. |
-|---|---|---|---|---|---|
-| Slice isolation breach | "5G Network Slicing: Security Challenges" | MDPI Sensors | 2025 | 3/5 | Partial |
-| **Rogue gNB slice manipulation** | **"Integrity Under Siege"** — Xu, Loscri, Rouvoy | arXiv 2511.03312 | **Nov 2025** | 3/5 | Partial |
-| RL-based side-channel | "Attacking Slicing via Side-channel RL" | arXiv 2409.11258 | Sep 2024 | 1/5 | No |
+Network slicing is the central promise of 5G's multi-tenant value: one physical infrastructure carrying logically isolated slices (eMBB, URLLC, IoT, enterprise, …) each with its own SLA and security policy. The attacks in this category break that isolation: a rogue gNB or compromised RAN component can forge slice-selection metadata (NSSAI), trigger slice-hopping, or use side-channels to infer activity on adjacent slices. Recent paper (Xu et al., "Integrity Under Siege," Nov 2025) demonstrates QoS degradation up to 95 % bandwidth reduction and ~80 % UPF CPU saturation.
 
-## Rogue gNB Slice Manipulation (2025)
+## Sub-attacks
 
-A MITM gNodeB exploits protocol weaknesses to manipulate slice allocation. The rogue gNB can forge slice requests, causing QoS degradation, resource contamination, and approximately 80% CPU saturation on the UPF.
+| Attack | Paper | Venue | Date | Repl. |
+|---|---|---|---|---|
+| **Rogue gNB NSSAI manipulation** | [Integrity Under Siege (Xu et al.)](https://arxiv.org/abs/2511.03312) | arXiv | **Nov 2025** | 3/5 |
+| Slice isolation breach | "5G Network Slicing: Security Challenges" | MDPI Sensors | 2025 | 3/5 |
+| RL-based side-channel inference | [arXiv:2409.11258](https://arxiv.org/abs/2409.11258) | arXiv | Sep 2024 | 1/5 |
 
-**Replication:** Configure multiple slices on Open5GS, then use modified srsRAN gNB to forge NSSAI (Network Slice Selection Assistance Information) in registration requests. Requires PA for OTA operation.
+## Threat Model
 
-## Slice Isolation Breach
+| | |
+|---|---|
+| **Attacker** | Rogue gNB / compromised RAN component (DU/CU) with control over NSSAI in RRC registration |
+| **Victim** | 5GC slice tenants and the UPF serving them |
+| **Position** | Acts as a MitM-style or rogue gNB in the RAN |
+| **Capability** | Forge NSSAI in `RegistrationRequest`; exploit weak slice-validation policies in AMF; null-cipher fallback (5G-EA0) makes the attack stealthier |
+| **Impact** | QoS degradation, resource exhaustion, DoS, cross-slice data exposure |
 
-Slice-hopping attacks allow malicious traffic migration across slice boundaries. Rogue slice instantiation and QoS/resource integrity manipulation are also possible when isolation is improperly configured.
+## Attack Mechanism
 
-**Replication:** Test on your Open5GS with multiple slice configurations. Verify isolation between eMBB and URLLC slices.
+1. The rogue gNB intercepts (or originates) a UE registration that targets slice A (e.g., eMBB).
+2. It rewrites the NSSAI to request slice B (e.g., URLLC) — a slice the UE is not authorized for.
+3. If the AMF validates NSSAI loosely (common in misconfigured cores), the UE is admitted to slice B.
+4. The attacker can now: (a) consume slice-B resources (DoS for legit tenants), (b) inject traffic into slice B's isolated context, (c) trigger massive cross-slice contention to saturate the UPF.
+
+The 2025 paper measures 95 % bandwidth reduction on the targeted slice and ~60 % packet loss in cross-slice contamination attacks.
+
+## Replication
+
+- **Setup**: Open5GS configured with at least two slices (eMBB + URLLC). Modify srsRAN gNB to emit forged NSSAI in `RegistrationRequest`.
+- **No SIM modification needed** if the attack runs at the RAN side.
+- **PA required** for over-the-air testing; without PA, restricted to shielded lab.
+- **Measurement**: drive load on slice A's traffic and observe degradation on slice B.
+
+## RF Signature (passive RF + AI)
+
+Network slicing attacks are **partially visible on the air interface** — NSSAI is carried in plaintext RRC during registration:
+
+- **NSSAI-vs-PCI correlation**: a passive sniffer can decode the requested NSSAI and compare it to expected slice allocations per cell/operator. AI angle: classifier on (PCI, NSSAI) pairs to flag anomalous combinations.
+- **Registration-request rate per slice**: rogue-gNB-driven floods register many fake UEs into a slice; a sniffer sees the registration storm.
+- **Subtle but real**: the harder signal is operators rarely publish their per-cell slice maps, so the AI needs to learn the baseline empirically.
+
+This makes slicing a **moderate-fit** target for the lab's RF + AI thesis — partially observable on air, partially core-only.
+
+## Detection (operator side)
+
+- AMF policy: strict NSSAI validation against the subscription profile in UDM.
+- SMF/UPF: per-slice quota enforcement so a single slice can't starve the others.
+- O-RAN xApp monitoring slice-allocation anomalies in near-real-time.
+
+## References
+
+1. Xu, Loscri, Rouvoy, "Integrity Under Siege: A Rogue gNodeB's Manipulation of 5G Network Slice Allocation," [arXiv:2511.03312](https://arxiv.org/abs/2511.03312), Nov 2025.
+2. "5G Network Slicing: Security Challenges and Mitigation Approaches," MDPI Sensors, 2025.
+3. 3GPP TS 23.501 — NSSAI and slice selection procedure.

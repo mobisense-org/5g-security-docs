@@ -1,24 +1,65 @@
 ---
 title: 'GTP Tunneling Attacks'
-description: 'Rank #16 — GTP-U hijacking, tunnel bypass, PFCP DoS'
+description: 'Rank #11 — GTP-U user-plane hijacking, in-tunnel encapsulation bypass, PFCP-based DoS. Core/backhaul attack surface — not visible on the air interface.'
 ---
 
-## Sub-Attacks
+## Summary
 
-| Attack | Paper | Venue | Date | Ease | Repl. |
-|---|---|---|---|---|---|
-| GTP-U traffic hijacking | "Invade the Walled Garden: Evaluating GTP Security" | IEEE S&P | May 2025 | 1/5 | No |
-| GTP-U-in-GTP-U bypass | "Uncovering Hidden Paths in 5G Core" | TU Berlin | 2025 | 1/5 | No |
-| PFCP DoS | "Threatening the 5G Core via PFCP DoS" | HAL Archive | 2023 | 3/5 | Partial |
+GTP-U (GPRS Tunnelling Protocol — User Plane) carries every byte of subscriber traffic between gNB and UPF, and between UPFs in roaming. PFCP (Packet Forwarding Control Protocol) is the SMF↔UPF control channel. 3GPP assumed both protocols live inside the operator's "walled garden" and never specified strong authentication or integrity — an assumption that broke when researchers found **749,000 GTP endpoints exposed on the public Internet** across 162 countries (S&P '25). This row covers the related class of tunneling-protocol attacks.
 
-## GTP-U Traffic Hijacking (S&P 2025)
+## Sub-attacks
 
-Discovered **749,000 publicly accessible GTP hosts** spanning 1,176 service providers in 162 countries. Attackers can remotely disrupt user endpoints or perform off-path traffic hijacking with bandwidth amplification factor up to 170x.
+| Attack | Paper | Venue | Date | Repl. |
+|---|---|---|---|---|
+| GTP-U traffic hijacking | [Invade the Walled Garden](https://www.jianjunchen.com/p/gtp-cellular.sp25.pdf) | IEEE S&P | May 2025 | 1/5 |
+| In-tunnel encapsulation bypass | [Uncovering Hidden Paths in 5G](https://dl.acm.org/doi/proceedings/10.1145/3719027) | CCS | 2025 | 2/5 |
+| PFCP DoS / hijack | "Threatening the 5G Core via PFCP DoS" | HAL Archive | 2023 | 3/5 |
 
-**Not replicable** with lab hardware — requires carrier GTP endpoint access.
+## Threat Model
 
-## PFCP DoS
+| | |
+|---|---|
+| **Attacker** | Internet-side attacker (for exposed GTP) or backhaul-attached attacker (for hidden-path variants) |
+| **Victim** | UPF, SMF, and ultimately subscriber traffic |
+| **Position** | Public Internet OR a foothold on operator transport |
+| **Capability** | Forge GTP-U / PFCP packets at the IP layer; no RF, no SIM, no UE involvement |
+| **Asymmetry** | Some variants achieve bandwidth amplification factor ~170× via reflective DoS |
 
-Packet Forwarding Control Protocol DoS attacks on core network functions (SMF/UPF). **Testable against your own Open5GS** instance by sending malformed PFCP messages to the UPF.
+## Attack Mechanism
 
-**Replication:** Send crafted PFCP Session Establishment/Modification requests to Open5GS UPF. Use scapy or custom scripts.
+**GTP-U hijacking (Invade the Walled Garden):**
+1. Scan the IPv4 space on UDP/2152 (GTP-U) → 749k responding hosts.
+2. Send crafted GTP-U packets that match an active TEID (Tunnel Endpoint ID).
+3. UPFs that don't validate source IP / TEID-binding accept and forward the spoofed traffic.
+4. Outcomes: traffic injection into a subscriber's session, reflective DoS to amplify outbound traffic, off-path session steering.
+
+**In-tunnel encapsulation bypass (Hidden Paths CCS '25):**
+The paper documents that outer GTP-U headers + inner payload are validated inconsistently across NF implementations. An attacker with backhaul reach can encapsulate a packet whose outer says "context A" but inner is for "context B," crossing trust boundaries that operators believed were isolated (notably across PLMNs in roaming).
+
+**PFCP DoS:**
+PFCP sessions between SMF and UPF often run without authentication on private operator networks. Crafted Session Establishment/Modification requests can be replayed or fuzzed to overload the UPF or hijack PDU sessions.
+
+## Replication
+
+- **Internet-scale GTP-U hijacking**: NOT replicable in a typical lab — requires Internet-exposed GTP targets which are operator infrastructure.
+- **Lab-scale GTP-U/PFCP testing**: fully replicable against your own [Open5GS](https://github.com/open5gs/open5gs) instance. Run an isolated Open5GS deployment, then `scapy` + custom scripts send malformed GTP-U / PFCP frames to UPF.
+- **Hidden Paths**: requires the rare combination of two operator-grade UPF/SMF stacks with N9 reachability — typically only reachable in roaming-test environments.
+
+## RF Signature
+
+**No RF signature.** GTP/PFCP traffic rides over the wired (or IP transport) backhaul between gNB and core, never on the air interface. A passive RF sniffer over the radio sees nothing — these attacks are invisible to AI-on-RF detection by construction.
+
+If your defense thesis is "passive RF + AI," **mark this entire row as out-of-scope for the primary detector**. Detection has to live on the operator's IP transport.
+
+## Detection (operator side)
+
+- IPsec on N3 / N9 (recommended by 3GPP, rarely deployed end-to-end).
+- TEID/source-IP binding validation at every UPF.
+- PFCP session policing with strict authentication (3GPP TS 29.244).
+- Internet-side: shrink the GTP attack surface by removing public exposure (the bulk of the 749k findings would disappear with proper egress filtering).
+
+## References
+
+1. Zhang et al., "Invade the Walled Garden: Evaluating GTP Security in Cellular Networks," [IEEE S&P 2025](https://www.jianjunchen.com/p/gtp-cellular.sp25.pdf).
+2. "Uncovering Hidden Paths in 5G: Exploiting Protocol Tunneling and Network Boundary Bridging," [ACM CCS 2025](https://dl.acm.org/doi/proceedings/10.1145/3719027).
+3. 3GPP TS 29.244 — PFCP specification.

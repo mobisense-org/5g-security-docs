@@ -1,28 +1,65 @@
 ---
 title: 'O-RAN / Supply Chain'
-description: 'Rank #18 — O-RAN interface exploitation, RIC compromise, fronthaul eavesdropping'
+description: 'Rank #13 — O-RAN open interface (E2/A1/O1/F1) exploitation, RIC xApp compromise, fronthaul eavesdropping. Mostly internal-network attack surface.'
 ---
 
-## Sub-Attacks
+## Summary
 
-| Attack | Paper | Venue | Date | Code | Ease | Repl. |
-|---|---|---|---|---|---|---|
-| O-RAN interface exploitation | "Open RAN Security Report" | NTIA (US Govt) | May 2023 | [5G-Spector](https://github.com/5GSEC/5G-Spector) + [MobiDojo](https://github.com/5GSEC/MobiDojo) | 4/5 | Yes |
-| RIC xApp/rApp compromise | "Next-Gen Cyber-Range for O-RAN" | MDPI | 2024 | - | 2/5 | Partial |
-| Fronthaul eavesdropping | P1 Security zero-trust report | P1 Security | Mar 2025 | - | 3/5 | Partial |
+Open RAN disaggregates the gNB into RU + DU + CU + RIC + xApps, connected by open interfaces (F1 between CU and DU, E2 between RIC and CU/DU, A1 between Non-RT and Near-RT RIC, O1 management). Each new interface is a new attack surface; each multi-vendor split is a new supply-chain seam. The NTIA Open RAN Security Report (May 2023) flagged this expansion; NDSS '24's 5G-Spector paper built the first xApp-based intrusion detection for it. Most of the surface is on internal operator networks rather than over the air.
 
-## O-RAN Interface Exploitation
+## Sub-attacks
 
-Open RAN increases attack surface due to new interfaces (E2, O1, A1, F1) and multi-vendor supply chain. The NTIA report identifies that disaggregation creates more potential entry points.
+| Attack | Paper / Source | Venue | Date | Repl. |
+|---|---|---|---|---|
+| O-RAN interface (E2/A1/O1/F1) exploitation | [5G-Spector (NDSS '24)](https://www.ndss-symposium.org/wp-content/uploads/2024-527-paper.pdf) + NTIA report | NDSS | Feb 2024 | 4/5 |
+| Malicious / compromised xApp on Near-RT RIC | "Next-Gen Cyber-Range for O-RAN" | MDPI | 2024 | 2/5 |
+| Fronthaul eavesdropping / injection (between RU and DU) | P1 Security zero-trust report | P1 Security | Mar 2025 | 3/5 |
 
-**Your advantage:** You have Benetel 550/640 O-RAN RUs. You can test:
-- E2 interface between RIC and CU/DU
-- F1 interface between CU and DU
-- O1 management interface
-- Fronthaul traffic between RU and DU
+## Threat Model
 
-**Tools:** Deploy [5G-Spector](https://github.com/5GSEC/5G-Spector) as an O-RAN xApp for detection. Use [MobiDojo](https://github.com/5GSEC/MobiDojo) for virtual testing first.
+| | |
+|---|---|
+| **Attacker** | Malicious xApp or rApp deployed to the RIC; compromised vendor component in the supply chain; insider on the operator's internal RAN network |
+| **Victim** | gNB (CU/DU), RIC, ultimately UEs in the affected cells |
+| **Position** | Inside the operator's RAN management plane (E2/A1/O1) or fronthaul (eCPRI between RU and DU) |
+| **Capability** | Read/write E2 SM messages; manipulate RIC policy decisions; forge fronthaul I/Q if PHY-layer encryption isn't deployed |
+| **Pre-requisite** | RIC deployment access, xApp publishing rights, or fronthaul physical/network access |
 
-## Extra Hardware Needed
-- **PTP-capable fronthaul switch** ($2000-5000) for Benetel RU timing
-- 10 GbE NIC for fronthaul connectivity
+## Attack Mechanism
+
+**E2 / xApp:** A malicious xApp speaks E2-AP to the gNB. Without RIC policy enforcement, the xApp can issue control actions that move UEs between cells, change scheduling priorities, mute specific UEs, or exfiltrate per-UE metrics. The xApp is a privileged tenant by design.
+
+**A1 / Non-RT RIC:** policies flow from the SMO into the Near-RT RIC. A tampered A1 channel rewrites policies on the fly.
+
+**O1 / management:** O-RAN's O1 interface (over NETCONF) configures the gNB. Missing TLS or weak credentials → full reconfiguration.
+
+**Fronthaul (eCPRI/Split 7.2x):** the I/Q traffic between RU and DU is by default unencrypted; the O-RAN security WG recommends MACsec or IPsec, but adoption varies. An attacker on the fronthaul switch sees raw radio samples.
+
+## Replication
+
+- **xApp testing**: deploy [5G-Spector](https://github.com/5GSEC/5G-Spector) as a benign monitoring xApp on a Near-RT RIC (ONOS RIC, FlexRIC, OSC RIC). Then deploy a deliberately misbehaving xApp to see what E2 calls it can issue. Use [MobiDojo](https://github.com/5GSEC/MobiDojo) as a virtual O-RAN testbed for safe experimentation.
+- **Fronthaul testing**: requires real RU hardware. Mobisense has Benetel 550/640 O-RAN RUs which support fronthaul capture — instrument a 10 GbE tap between RU and DU.
+- **Extra hardware**: PTP-grade fronthaul switch ($2k–5k), SFP+ 10 GbE NIC, optical taps for non-disruptive capture.
+
+## RF Signature
+
+O-RAN attacks are **mostly internal** — E2/A1/O1 traffic is on the operator network, not the air. **Two partial exceptions** the lab's RF thesis can address:
+
+- **Fronthaul (eCPRI) eavesdropping** is over fiber/Ethernet between RU and DU, not over the air — out of scope for an over-the-air sniffer, but in scope for a wired tap.
+- **Downstream RF effects** of xApp manipulation: if a malicious xApp forces a victim UE to a worse cell or mutes its scheduling, a passive RF sniffer near the victim sees the resulting handover storm or PUSCH starvation. AI angle: per-UE scheduling-pattern anomaly detection.
+
+Net: mostly **not visible** to passive RF + AI, but downstream effects can be inferred from radio behavior.
+
+## Detection (operator / RIC side)
+
+- RIC: cryptographic auth on xApp registration; per-xApp scoping of E2 service models.
+- A1/O1: mTLS everywhere; signed config payloads.
+- Fronthaul: MACsec/IPsec on eCPRI links (per O-RAN security WG).
+- Supply chain: SBOM tracking on every RAN component; signed firmware images.
+
+## References
+
+1. "5G-SPECTOR: An O-RAN Compliant Layer-3 Cellular Attack Detection Service," [NDSS 2024](https://www.ndss-symposium.org/wp-content/uploads/2024-527-paper.pdf).
+2. NTIA, "Open RAN Security Report," May 2023.
+3. [5G-Spector](https://github.com/5GSEC/5G-Spector) and [MobiDojo](https://github.com/5GSEC/MobiDojo) — implementation + testbed.
+4. O-RAN ALLIANCE Security Working Group specifications.

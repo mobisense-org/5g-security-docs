@@ -1,37 +1,83 @@
 ---
 title: "5GHOUL"
-description: "Pre-authentication fuzzing framework exploiting 14+ vulnerabilities in Qualcomm and MediaTek 5G NR modems, requiring no SIM card and running via Docker."
+description: "Pre-authentication fuzzing framework exploiting 22+ vulnerabilities in Qualcomm and MediaTek 5G NR modems, no SIM required, ships as a Docker image."
 ---
 
 ## Summary
 
-5GHOUL is a pre-authentication vulnerability exploitation framework targeting commercial 5G NR modems from Qualcomm and MediaTek. It discovered 14 or more vulnerabilities in the pre-authentication RRC/NAS handling of these chipsets, enabling denial of service, forced downgrades, and modem crashes -- all without the attacker needing a SIM card. With Docker-based deployment and 661 GitHub stars, it is one of the most accessible 5G attack tools available.
+5GHOUL is a pre-authentication exploitation framework targeting commercial 5G NR modems from Qualcomm and MediaTek. It packages 22+ known vulnerabilities (14 disclosed initially in Dec 2023, more added through 2024) into a single Docker container that runs against any nearby UE — no SIM card, no operator coordination. The all-in-one Docker + B210 setup makes it the **easiest published 5G attack to reproduce in a lab**.
 
 ## Paper
 
 | Field | Details |
 |---|---|
-| **Authors** | Matheus K. Garbelini et al., SUTD Asset Group |
-| **Venue** | December 2023 disclosure + IEEE 2024 publication |
-| **GitHub** | [asset-group/5ghoul-5g-nr-attacks](https://github.com/asset-group/5ghoul-5g-nr-attacks) (661 stars) |
+| **Authors** | Matheus K. Garbelini et al., SUTD ASSET Group |
+| **Disclosure** | December 2023 |
+| **Publication** | IEEE TDSC, June 2025 (formal academic write-up) |
+| **GitHub** | [asset-group/5ghoul-5g-nr-attacks](https://github.com/asset-group/5ghoul-5g-nr-attacks) (661 ★) |
+| **Disclosure PDF** | [asset-group.github.io/disclosures/5ghoul/5ghoul.pdf](https://asset-group.github.io/disclosures/5ghoul/5ghoul.pdf) |
 | **Deployment** | Docker container with pre-built environment |
-| **Affected Chipsets** | Qualcomm + MediaTek 5G modems |
+| **Affected Chipsets** | Qualcomm Snapdragon (multiple) + MediaTek 5G modems |
 | **SIM Required** | No |
 | **SDR** | USRP B210 |
 | **Ease of Replication** | 5/5 |
 
+## Threat Model
+
+| | |
+|---|---|
+| **Attacker** | Rogue gNB (modified srsRAN + Open5GS in a Docker box) |
+| **Victim** | UE modem (baseband firmware) |
+| **Position** | Within radio range of victim UE (typically < 10 m for unamplified B210; further with PA) |
+| **Capability** | Broadcast SSB/MIB/SIB1 of a fake cell at higher RSRP than legit cells; respond to RACH with crafted pre-auth RRC/NAS |
+| **Pre-auth?** | Yes — bugs trigger before AKA, no SIM needed |
+| **Persistence** | Some bugs require victim reboot to recover; others auto-recover after timeout |
+
 ## Attack Mechanism
 
-5GHOUL operates a minimal rogue gNB that broadcasts legitimate-looking SSB and MIB/SIB1 to attract nearby 5G UEs. When a UE initiates the RACH procedure, 5GHOUL responds with fuzzed or malformed RRC and NAS messages during the pre-authentication exchange. Because these messages are processed before the security context is established, the modem's baseband firmware parses them without cryptographic verification. The 14 or more discovered vulnerabilities include buffer overflows, assertion failures, and state machine violations in modem firmware, resulting in crashes, persistent denial of service (requiring reboot), and forced fallback to LTE.
+5GHOUL operates a minimal rogue gNB that broadcasts legitimate-looking SSB and MIB/SIB1 to attract nearby 5G UEs. When a UE initiates the RACH procedure:
 
-## Replication Notes
+1. 5GHOUL accepts the RACH and responds with crafted Msg2/Msg4.
+2. During the post-RACH RRC/NAS exchange, it injects fuzzed or malformed messages.
+3. Because the security context is not yet established, the modem firmware parses these messages without integrity checking.
+4. The bugs — buffer overflows, assertion failures, state-machine violations — cause crashes, persistent DoS, or forced fallback to LTE.
 
-- **Ease**: This is one of the most straightforward 5G attacks to replicate. The Docker container packages the entire tool chain including a modified Open5GS core and srsRAN-based gNB.
-- **Hardware**: A single USRP B210 is all that is needed. No PA or additional RF hardware is required since the rogue gNB only needs to attract devices in close proximity.
-- **No SIM**: The attacker does not need a SIM card or any subscriber credentials. The attack targets the modem firmware's pre-auth message parser.
-- **Steps**: (1) Pull the Docker image. (2) Connect B210. (3) Run the exploit selector to choose a target vulnerability. (4) Power on target device within range.
+The 22+ catalogued CVEs cover three vulnerability classes: parsing bugs in ASN.1-coded RRC/NAS, state machine inconsistencies, and integer overflows in MAC-layer length fields.
+
+## Replication
+
+The Docker container is one `docker run` away from a working attack:
+
+```bash
+git clone https://github.com/asset-group/5ghoul-5g-nr-attacks
+cd 5ghoul-5g-nr-attacks
+./run.sh   # builds + starts the Docker stack with srsRAN + Open5GS
+# In another shell:
+./fuzz_5g.sh <CVE_ID>   # pick from the menu
+```
+
+Then power on a target Qualcomm/MediaTek 5G phone with airplane mode off, within ~5 m of the B210 antenna. Most exploits trigger within seconds of the UE camping on the rogue cell.
+
+**No PA required** for short-range lab testing. Adding a 1 W PA on n78 gets you tens of meters; check local regulations.
+
+## RF Signature (passive RF + AI)
+
+5GHOUL is one of the **easiest classes of attack to detect** via a passive RF sniffer:
+
+- **New PCI on an unexpected band**: a sniffer with a baseline of the operator's legitimate PCIs flags a foreign cell instantly.
+- **SIB1 content fingerprint**: 5GHOUL's SIB1 typically uses srsRAN defaults — barring/priority/scheduling fields differ from carrier production gear. AI angle: classifier trained on operator-baseline SIB1 vs. arbitrary content.
+- **Anomalous pre-auth RRC content**: the fuzzed payloads themselves are out-of-spec — many fields use values that the operator never sends.
+- **Bursty RACH→teardown→reattach cycles** on the victim UE if the attack crashes the modem.
+
+A passive defender with a B210-class sniffer + a basic ML classifier on PCI + SIB content should catch a 5GHOUL gNB within seconds of it transmitting.
+
+## Detection (UE / OS / operator side)
+
+- Mobile OS: monitor for unexpected PLMN/PCI changes; flag connections that immediately drop into limited-service.
+- Operator: anomalous UE reattach storms in specific cells; "phantom" PCIs reported via measurement reports.
 
 ## References
 
-- M. K. Garbelini et al., "5GHOUL: Unleashing Chaos on 5G Edge Devices," December 2023 / IEEE, 2024.
-- GitHub: [asset-group/5ghoul-5g-nr-attacks](https://github.com/asset-group/5ghoul-5g-nr-attacks)
+1. M. K. Garbelini et al., "5GHOUL: Unleashing Chaos on 5G Edge Devices via Stateful Multi-layer Fuzzing," IEEE TDSC, 2025 (disclosure Dec 2023).
+2. GitHub: [asset-group/5ghoul-5g-nr-attacks](https://github.com/asset-group/5ghoul-5g-nr-attacks).
+3. Disclosure PDF: [5ghoul.pdf](https://asset-group.github.io/disclosures/5ghoul/5ghoul.pdf).
