@@ -95,14 +95,14 @@ table b a {
 }
 html.dark .attacks-toolbar input,
 html.dark .attacks-toolbar select,
-.dark .attacks-toolbar input,
-.dark .attacks-toolbar select {
+html[data-theme="dark"] .attacks-toolbar input,
+html[data-theme="dark"] .attacks-toolbar select {
   background: #171717 !important;
   color: #f5f5f5 !important;
   border-color: #404040 !important;
 }
 html.dark .attacks-toolbar input::placeholder,
-.dark .attacks-toolbar input::placeholder { color: #6b7280 !important; }
+html[data-theme="dark"] .attacks-toolbar input::placeholder { color: #6b7280 !important; }
 .attacks-toolbar input { flex: 1 1 220px; min-width: 180px; }
 .attacks-toolbar input:focus,
 .attacks-toolbar select:focus {
@@ -156,8 +156,7 @@ table thead th {
   border-bottom: 1px solid #d1d5db;
 }
 html.dark table thead th,
-:root.dark table thead th,
-.dark table thead th {
+html[data-theme="dark"] table thead th {
   background: #0a0a0a !important;
   border-bottom-color: #262626 !important;
   color: #9ca3af !important;
