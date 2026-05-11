@@ -93,6 +93,24 @@ table b a {
   color: #111827;
   font-family: inherit;
 }
+@media (prefers-color-scheme: dark) {
+  .attacks-toolbar input,
+  .attacks-toolbar select {
+    background: #171717;
+    color: #f5f5f5;
+    border-color: #404040;
+  }
+  .attacks-toolbar input::placeholder { color: #6b7280; }
+}
+html.dark .attacks-toolbar input,
+html.dark .attacks-toolbar select,
+.dark .attacks-toolbar input,
+.dark .attacks-toolbar select {
+  background: #171717 !important;
+  color: #f5f5f5 !important;
+  border-color: #404040 !important;
+}
+.dark .attacks-toolbar input::placeholder { color: #6b7280 !important; }
 .attacks-toolbar input { flex: 1 1 220px; min-width: 180px; }
 .attacks-toolbar input:focus,
 .attacks-toolbar select:focus {
@@ -135,13 +153,29 @@ table thead th.sort-desc .sort-arrow {
 
 /* ---------- Phase 4 polish ---------- */
 
-/* Sticky table header so column names stay visible when scrolling */
+/* Sticky table header so column names stay visible when scrolling.
+   Background adapts to color scheme so the row isn't white-on-dark or vice versa. */
 table thead th {
   position: sticky;
   top: 0;
   z-index: 2;
   background: #fafafa;
   border-bottom: 1px solid #e5e7eb;
+}
+@media (prefers-color-scheme: dark) {
+  table thead th {
+    background: #0a0a0a;
+    border-bottom-color: #262626;
+    color: #9ca3af;
+  }
+}
+/* Mintlify class-based dark toggle (overrides media query when user explicitly toggled) */
+html.dark table thead th,
+:root.dark table thead th,
+.dark table thead th {
+  background: #0a0a0a !important;
+  border-bottom-color: #262626 !important;
+  color: #9ca3af !important;
 }
 
 /* Color-coded threat-model badges
