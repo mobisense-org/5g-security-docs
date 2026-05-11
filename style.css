@@ -133,3 +133,100 @@ table thead th.sort-desc .sort-arrow {
   color: #DC2626;
 }
 
+/* ---------- Phase 4 polish ---------- */
+
+/* Sticky table header so column names stay visible when scrolling */
+table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: #fafafa;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+/* Color-coded threat-model badges
+   The JS adds data-threat="passive-rf" etc. on each Threat cell. */
+table td[data-threat] {
+  font-weight: 500;
+}
+table td[data-threat]::before {
+  content: "";
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-right: 7px;
+  vertical-align: 1px;
+  background: #6b7280;
+}
+table td[data-threat="passive-rf"]::before        { background: #64748b; }
+table td[data-threat="active-rf"]::before         { background: #d97706; }
+table td[data-threat="rogue-gnb"]::before         { background: #dc2626; }
+table td[data-threat="relay-gnb"]::before         { background: #db2777; }
+table td[data-threat="rogue-ue"]::before          { background: #ea580c; }
+table td[data-threat="sba"]::before               { background: #7c3aed; }
+table td[data-threat="backhaul"]::before          { background: #4f46e5; }
+table td[data-threat="internet"]::before          { background: #059669; }
+table td[data-threat="physical-internet"]::before { background: #0d9488; }
+table td[data-threat="physical"]::before          { background: #6b7280; }
+
+/* Detection-method tint on the Detect cell — subtle background instead of dot */
+table td[data-detect="rf-ai"]   { background: rgba(37, 99, 235, 0.07);  }
+table td[data-detect="bs-logs"] { background: rgba(124, 58, 237, 0.07); }
+table td[data-detect="both"]    { background: rgba(5, 150, 105, 0.07);  }
+table td[data-detect="neither"] { background: rgba(107, 114, 128, 0.06); }
+
+/* "Best first-draft candidate" row indicator
+   The JS adds class="candidate" on rows that satisfy:
+     Repl >= 4  AND  Detect in {RF AI, Both}  AND  Code has a real link */
+table tbody tr.candidate {
+  background: linear-gradient(to right, rgba(220, 38, 38, 0.05) 0%, transparent 14%);
+  box-shadow: inset 3px 0 0 #DC2626;
+}
+table tbody tr.candidate td:first-child::after {
+  content: " ✦";
+  color: #DC2626;
+  font-weight: 700;
+  margin-left: 2px;
+}
+
+/* Toolbar: "Best candidates" pill button */
+.attacks-toolbar button#atk-candidates {
+  background: white;
+  color: #DC2626;
+  border: 1px solid #DC2626;
+}
+.attacks-toolbar button#atk-candidates:hover {
+  background: rgba(220, 38, 38, 0.06);
+}
+.attacks-toolbar button#atk-candidates.active {
+  background: #DC2626;
+  color: white;
+}
+.attacks-toolbar button#atk-candidates::before {
+  content: "✦ ";
+  font-weight: 700;
+}
+
+/* Compact toolbar on wide screens: one row instead of wrapping */
+@media (min-width: 1280px) {
+  .attacks-toolbar {
+    flex-wrap: nowrap;
+    gap: 8px;
+    padding: 10px 12px;
+  }
+  .attacks-toolbar input,
+  .attacks-toolbar select {
+    padding: 6px 9px;
+    font-size: 12.5px;
+  }
+  .attacks-toolbar input {
+    flex: 1 1 200px;
+    min-width: 160px;
+  }
+  .attacks-toolbar button {
+    padding: 6px 10px;
+    font-size: 12.5px;
+  }
+}
+

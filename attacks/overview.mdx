@@ -87,13 +87,45 @@ Most cells in each row link to the **attack's detail page** (so you can click ~a
 | [12](/attacks/14-20-specialized/citesting) | | **[CITesting (context integrity)](/attacks/14-20-specialized/citesting)** | Network attacker | 5GC | [CITesting](https://dl.acm.org/doi/proceedings/10.1145/3719027) | CCS '25 | **[CCS 2025](/attacks/14-20-specialized/citesting)** | No | BS Logs | SBA | 3/5 |
 | [13](/attacks/14-20-specialized/oran-supply-chain) | [O-RAN](/attacks/14-20-specialized/oran-supply-chain) | [Interface exploit](/attacks/14-20-specialized/oran-supply-chain) | Malicious xApp / E2 attacker | gNB / RIC | [5G-Spector + NTIA](https://www.ndss-symposium.org/wp-content/uploads/2024-527-paper.pdf) | NDSS '24 | [2023-2025](/attacks/14-20-specialized/oran-supply-chain) | [5G-Spector](https://github.com/5GSEC/5G-Spector) | BS Logs | SBA | 4/5 |
 
-## Quick Lens
+## Triage Shortcuts
 
-**Best targets for a passive RF + AI defender** (everything in `RF AI` or `Both`): SIB1 spoofing, MITM relay, cell reselection, 5Gone, 5GHOUL, CONSET, PRACH jam, RACH Msg1 jam, RRC flood, SIB1+TA DoS, 5GBaseChecker delivery, MAC CE spoofing, baseband-fuzzing OTA delivery, downgrade, femtocells.
+A research-tool view of the table. The **✦ Best candidates** button above also highlights bucket 1.
 
-**Visible only with operator access** (`BS Logs`): RRC storm, AMF crash, RANsacked-discovered bugs, Open5GS vulns, CoreCrisis, rogue-gNB slicing, GTP-U, hidden paths, SBA API/token abuse, CITesting, O-RAN interface exploits.
+**🎯 Best first-draft candidates** — Repl ≥ 4/5, Detect ∈ {RF AI, Both}, and a real code repo:
+[SIB1 spoofing](/attacks/02-fake-base-station/sib1-spoofing) ·
+[SNI5GECT uplink](/attacks/01-imsi-catching/sni5gect-uplink) ·
+[SNI5GECT inject](/attacks/06-pre-auth-injection/sni5gect) ·
+[5GHOUL](/attacks/06-pre-auth-injection/5ghoul) ·
+[PRACH jam](/attacks/07-dos/prach-jamming) ·
+[RACH Msg1 jam](/attacks/07-dos/rach-msg1-jamming) ·
+[RRC flood](/attacks/07-dos/rrc-flood) ·
+[SIB1+TA DoS](/attacks/07-dos/breaking-5g-lower-layer).
+These are the rows where everything aligns: the lab has the gear, the paper is out, code exists, and a passive RF + AI sensor can plausibly see the attack.
 
-**Effectively undetectable** (`Neither`): passive IMSI sniffing in NSA, C-RNTI tracking, GUTI visual-RF correlation. These are mitigation problems, not detection problems.
+**🟢 RF-detectable but harder to replicate** — Detect ∈ {RF AI, Both}, but Repl ≤ 3 OR no public code:
+[MITM relay gNB](/attacks/02-fake-base-station/mitm-relay) ·
+[Cell reselection](/attacks/02-fake-base-station/cell-reselection) ·
+[5G-to-2G bidding-down](/attacks/03-downgrade/bidding-down) ·
+[5Gone uplink overshadow](/attacks/05-signal-overshadowing/5gone) ·
+[CONSET](/attacks/06-pre-auth-injection/conset) ·
+[Femtocell field study](/attacks/02-fake-base-station/femtocells) ·
+[5GBaseChecker](/attacks/10-fuzzing/5gbasechecker) ·
+[Baseband emulation cluster](/attacks/10-fuzzing/baseband-fuzzing) ·
+[MAC CE spoofing](/attacks/13-battery-drain/mac-ce-spoofing).
+Worth a research-grade attempt — the RF data is there, but you'll need to rebuild the attacker side from the paper.
+
+**🟡 Replicable but RF-blind** — Repl ≥ 4/5 but Detect = BS Logs or Neither. Useful as red-team material or for the core-side defender, not for the passive-RF detection thesis:
+[Passive IMSI (NSA)](/attacks/01-imsi-catching/passive-sniffing) ·
+[RANsacked](/attacks/10-fuzzing/ransacked) ·
+[Open5GS vulns](/attacks/10-fuzzing/open5gs-vulns) ·
+[CoreCrisis](/attacks/10-fuzzing/corecrisis) ·
+[C-RNTI tracking](/attacks/11-location-tracking/crnti-tracking) ·
+[O-RAN interface exploit](/attacks/14-20-specialized/oran-supply-chain).
+
+**⚫ Effectively undetectable** — Neither. Mitigation problems, not detection problems:
+[Passive IMSI sniffing in NSA](/attacks/01-imsi-catching/passive-sniffing) ·
+[C-RNTI tracking](/attacks/11-location-tracking/crnti-tracking) ·
+[GUTI visual-RF correlation](/attacks/11-location-tracking/guti-visual-rf).
 
 ## Recent Additions (2025-2026)
 
@@ -150,6 +182,7 @@ The bolded rows are new since the original 2023-2024 master list. Three concentr
     toolbar.className = "attacks-toolbar";
     toolbar.innerHTML =
       '<input type="text" id="atk-q" placeholder="Search attacks, papers, attackers, victims..." />' +
+      '<button id="atk-candidates" title="Show only attacks the lab can replicate AND detect on passive RF + AI">Best candidates</button>' +
       '<select id="atk-detect"><option value="">All detection</option><option>RF AI</option><option>BS Logs</option><option>Both</option><option>Neither</option></select>' +
       '<select id="atk-threat"><option value="">All threat models</option></select>' +
       '<select id="atk-venue"><option value="">All venues</option></select>' +
@@ -203,6 +236,7 @@ The bolded rows are new since the original 2023-2024 master list. Three concentr
     });
 
     let sortCol = null, sortDir = 0;
+    let candidatesOnly = false;
 
     function detectVal(r) { return (r.cells[cols.detect] || {}).textContent?.trim().toLowerCase() || ""; }
     function threatVal(r) { return (r.cells[cols.threat] || {}).textContent?.trim().toLowerCase() || ""; }
@@ -210,6 +244,22 @@ The bolded rows are new since the original 2023-2024 master list. Three concentr
     function catVal(r)    { return ((r.cells[cols.cat] || r.cells[cols.category] || {}).textContent?.trim() || "").toLowerCase(); }
     function codeVal(r)   { return (r.cells[cols.code] || {}).textContent?.trim().toLowerCase() || ""; }
     function replVal(r)   { const t = (r.cells[cols.repl] || {}).textContent?.trim() || ""; const m = t.match(/(\\d+)/); return m ? parseInt(m[1]) : 0; }
+    function isCandidate(r) {
+      const d = detectVal(r);
+      const cv = codeVal(r);
+      const isNoCode = !cv || cv === "no" || cv === "—" || cv === "-" || cv === "not yet" || cv === "partial";
+      return replVal(r) >= 4 && (d === "rf ai" || d === "both") && !isNoCode;
+    }
+
+    // Tag each row with data-threat, data-detect, and class="candidate" for CSS targeting
+    rows.forEach(r => {
+      const slug = s => s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+      const tc = r.cells[cols.threat];
+      if (tc) tc.setAttribute("data-threat", slug(tc.textContent.trim()));
+      const dc = r.cells[cols.detect];
+      if (dc) dc.setAttribute("data-detect", slug(dc.textContent.trim()));
+      if (isCandidate(r)) r.classList.add("candidate");
+    });
 
     function apply() {
       const q = toolbar.querySelector("#atk-q").value.trim().toLowerCase();
@@ -226,6 +276,7 @@ The bolded rows are new since the original 2023-2024 master list. Three concentr
         const cv = codeVal(r);
         const isNoCode = !cv || cv === "no" || cv === "—" || cv === "-" || cv === "not yet";
         let ok = true;
+        if (candidatesOnly && !r.classList.contains("candidate")) ok = false;
         if (q && !text.includes(q)) ok = false;
         if (fd && detectVal(r) !== fd) ok = false;
         if (ft && threatVal(r) !== ft) ok = false;
@@ -268,8 +319,15 @@ The bolded rows are new since the original 2023-2024 master list. Three concentr
 
     toolbar.addEventListener("input", apply);
     toolbar.addEventListener("change", apply);
+    toolbar.querySelector("#atk-candidates").addEventListener("click", e => {
+      candidatesOnly = !candidatesOnly;
+      e.currentTarget.classList.toggle("active", candidatesOnly);
+      apply();
+    });
     toolbar.querySelector("#atk-reset").addEventListener("click", () => {
       toolbar.querySelectorAll("input, select").forEach(el => el.value = "");
+      candidatesOnly = false;
+      toolbar.querySelector("#atk-candidates").classList.remove("active");
       sortCol = null; sortDir = 0;
       headers.forEach(h => h.classList.remove("sort-asc", "sort-desc"));
       apply();
