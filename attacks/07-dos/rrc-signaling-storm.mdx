@@ -13,7 +13,8 @@ This attack exploits the unprotected nature of Downlink Control Information (DCI
 
 ## Key Reference
 
-- **Reference:** arXiv 2025
+- **Reference:** ["RRC Signaling Storm Detection in O-RAN"](https://arxiv.org/abs/2504.15738), arXiv 2504.15738, Apr 2025
+- **Caveat:** The cited paper is a **detection / mitigation** paper, not an offensive paper. It documents the attack pattern (Random Access flooding via DCI injection) as part of building a detector. There is no canonical, standalone "RRC signaling storm attack" paper for 5G — the attack pattern is widely understood but typically published in defender-side work. Treat this row as "well-documented attack pattern, attack paper TBD."
 - **Result:** 132 Msg3 transmissions per second, rendering the gNB 95% unavailable
 
 ## Attack Mechanism
