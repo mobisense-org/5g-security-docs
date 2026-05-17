@@ -39,6 +39,23 @@ description: "Passive multi-target deanonymization by fusing a video feed with R
 
 GUTI rotation alone does **not** defeat this attack. Effective mitigations would have to either (a) eliminate timing side-channels in paging/scheduling or (b) randomize control-channel timing — both expensive. The paper itself is largely an existence proof rather than a defense paper.
 
+## RF Signature
+
+The attacker is fully passive on the RF side (camera is out-of-band), so *attack-in-progress detection from RF + AI is impossible* (table value: `Neither`).
+
+A passive RF + AI sensor at the same vantage point **can** measure the preconditions the fusion algorithm exploits:
+
+- **GUTI reallocation cadence** per cell — long-lived GUTIs make the fusion easier.
+- **Paging determinism** — predictable paging windows / lengths give the visual side stable anchors to correlate against.
+- **Per-UE scheduling regularity** that distinguishes one subscriber's traffic profile from another's.
+
+A defender can use this to score how exposed a given cell is, even though they cannot see an attacker doing the sniff.
+
+## Related work
+
+The 2024 Borgaonkar et al. paper *"Demystifying Privacy in 5G Stand Alone Networks"* ([arXiv 2409.17700](https://arxiv.org/abs/2409.17700)) is closely related on the RF side: it documents a **GUTI Reallocation Command** passive attack where the unencrypted 5G-GUTI is observable in the Configuration Update Command on the downlink paging channel — the same identifier this work then visually re-anchors.
+
 ## References
 
-- "Passive Multi-Target GUTI Identification via Visual-RF Correlation in LTE Networks," NDSS 2026. See the [NDSS 2026 accepted papers list](https://www.ndss-symposium.org/ndss2026/accepted-papers/).
+- "Passive Multi-Target GUTI Identification via Visual-RF Correlation in LTE Networks," NDSS 2026. *Full abstract / PDF not yet indexed at time of writing — see the [NDSS 2026 accepted papers list](https://www.ndss-symposium.org/ndss2026/accepted-papers/) once the program is finalized.*
+- Borgaonkar et al., *"Demystifying Privacy in 5G Stand Alone Networks,"* [arXiv 2409.17700](https://arxiv.org/abs/2409.17700) — passive GUTI exposure on downlink paging.

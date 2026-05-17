@@ -11,9 +11,12 @@ description: 'Passive eavesdropping on 5G Non-Standalone mode exposing IMSI on L
 
 | Field | Value |
 |---|---|
-| **Title** | "IMSI Catchers in the wild: A real world 4G/5G assessment" |
-| **Date** | 2023 |
-| **Type** | Large-scale real-world assessment (26 devices 4G, 4 devices 5G) |
+| **Title** | "IMSI Catchers in the Wild: A real world 4G/5G assessment" |
+| **Authors** | Palama, Gringoli, Bianchi, Blefari-Melazzi |
+| **Venue / Date** | *Computer Networks*, Elsevier, 2021 |
+| **Type** | Real-world IMSI-exposure measurement across 4G/5G deployments |
+
+> Abstract framing: *"IMSI catching attacks are a type of privacy threats designed to locate and track specific users by gathering their long-term identifiers, i.e. their IMSI."* The paper measures how often operators still expose IMSIs in cleartext — which is exactly the precondition this attack relies on.
 
 ## Source Code
 
@@ -89,6 +92,12 @@ This is the **easiest** attack to replicate. It requires zero transmission, zero
 - Only works against 5G-NSA networks (not 5G-SA)
 - As operators migrate to SA, this attack will stop working
 - Range depends on antenna quality (~100m+ with good antenna)
+
+## RF Signature
+
+The attacker is **silent** (receive-only SDR). A passive RF defender at the same location sees what the attacker sees — there is no transmission to flag. So *attack-in-progress detection is impossible* (table value: `Neither`).
+
+A passive RF + AI sensor **can** still answer a different, useful question: *"is this cell exposing IMSIs in cleartext right now?"* That's network-vulnerability assessment, not intrusion detection. The same LTESniffer pipeline that an attacker uses can be re-pointed at the operator's own LTE anchor and run periodically as an exposure scanner.
 
 ## References
 1. "IMSI Catchers in the wild: A real world 4G/5G assessment", 2023

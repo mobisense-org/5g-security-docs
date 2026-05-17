@@ -29,6 +29,10 @@ mode: "wide"
   }
 `}</style>
 
+<Card title="📊 Master attacks spreadsheet (SharePoint)" icon="file-excel" href="https://mobisense.sharepoint.com/:x:/s/MOBISENSE/IQCIksda3VIPQKvMLU3lNi3kAXZa7yBlSiDbqF81vfyg-Dg?e=3hd0IM" horizontal={true}>
+  Editable Excel mirror of the table below. Sort, filter, comment — Attack-name cells link back here to the detail page.
+</Card>
+
 ## Master Table (2023-2026)
 
 Most cells in each row link to the **attack's detail page** (so you can click ~anywhere in the row to open it). The **Paper** column links to the original paper or vendor disclosure. The **Code** column links to a public repo when one exists.
@@ -72,7 +76,7 @@ Most cells in each row link to the **attack's detail page** (so you can click ~a
 | [6](/attacks/10-fuzzing/open5gs-vulns) | | [Open5GS vulns](/attacks/10-fuzzing/open5gs-vulns) | Network attacker | 5GC | [Open5GS Vulnerability Assessment](https://www.mdpi.com/2624-800X/4/1/2) | MDPI '24 | [Jan 2024](/attacks/10-fuzzing/open5gs-vulns) | [Open5GS](https://github.com/open5gs/open5gs) | BS Logs | SBA | 4/5 |
 | [6](/attacks/10-fuzzing/corecrisis) | | **[CoreCrisis (5GC, 8 CVEs)](/attacks/10-fuzzing/corecrisis)** | Network attacker (SBA) | 5GC | [CoreCrisis](https://www.usenix.org/system/files/usenixsecurity25-dong-yilu.pdf) | USENIX '25 | **[USENIX 2025](/attacks/10-fuzzing/corecrisis)** | [CoreCrisis](https://github.com/SyNSec-den/CoreCrisis) | BS Logs | SBA | 4/5 |
 | [6](/attacks/10-fuzzing/baseband-fuzzing) | | **[Baseband emulation cluster](/attacks/10-fuzzing/baseband-fuzzing)** | Rogue gNB / emulator | UE modem | [Stateful + BaseBridge + LLFuzz + FirmState](/attacks/10-fuzzing/baseband-fuzzing) | S&P '25 / WiSec '25 | **[2025](/attacks/10-fuzzing/baseband-fuzzing)** | partial | RF AI | Rogue gNB | 3/5 |
-| [7](/attacks/11-location-tracking/crnti-tracking) | [Location](/attacks/11-location-tracking/crnti-tracking) | [C-RNTI tracking](/attacks/11-location-tracking/crnti-tracking) | Passive sniffer | Subscriber | [Demystifying Privacy 5G SA](https://arxiv.org/abs/2409.17700) | MobiCom '24 | [Sep 2024](/attacks/11-location-tracking/crnti-tracking) | [5GSniffer](https://github.com/spritelab/5GSniffer) | Neither | Passive RF | 5/5 |
+| [7](/attacks/11-location-tracking/crnti-tracking) | [Location](/attacks/11-location-tracking/crnti-tracking) | [C-RNTI tracking](/attacks/11-location-tracking/crnti-tracking) | Passive sniffer | Subscriber | [5GSniffer (tool + ASIA CCS '24)](https://github.com/spritelab/5GSniffer) | spritelab | [2024](/attacks/11-location-tracking/crnti-tracking) | [5GSniffer](https://github.com/spritelab/5GSniffer) | Neither | Passive RF | 5/5 |
 | [7](/attacks/11-location-tracking/guti-visual-rf) | | **[GUTI Visual-RF correlation](/attacks/11-location-tracking/guti-visual-rf)** | Sniffer + camera | Subscriber | [Passive Multi-Target GUTI ID](https://www.ndss-symposium.org/ndss2026/accepted-papers/) | NDSS '26 | **[NDSS 2026](/attacks/11-location-tracking/guti-visual-rf)** | No | Neither | Passive RF | 3/5 |
 | [8](/attacks/14-20-specialized/gtp-tunneling) | [GTP](/attacks/14-20-specialized/gtp-tunneling) | [GTP-U hijack](/attacks/14-20-specialized/gtp-tunneling) | Internet attacker | UPF / subscriber traffic | [Invade the Walled Garden](https://www.jianjunchen.com/p/gtp-cellular.sp25.pdf) | S&P '25 | [May 2025](/attacks/14-20-specialized/gtp-tunneling) | No | BS Logs | Internet | 1/5 |
 | [8](/attacks/14-20-specialized/hidden-paths) | | **[Hidden Paths in 5G](/attacks/14-20-specialized/hidden-paths)** | Backhaul attacker | 5GC / cross-PLMN | [Uncovering Hidden Paths](https://dl.acm.org/doi/proceedings/10.1145/3719027) | CCS '25 | **[CCS 2025](/attacks/14-20-specialized/hidden-paths)** | No | BS Logs | Backhaul | 2/5 |
@@ -114,14 +118,6 @@ Worth a research-grade attempt — the RF data is there, but you'll need to rebu
 [Passive IMSI sniffing in NSA](/attacks/01-imsi-catching/passive-sniffing) ·
 [C-RNTI tracking](/attacks/11-location-tracking/crnti-tracking) ·
 [GUTI visual-RF correlation](/attacks/11-location-tracking/guti-visual-rf).
-
-## Recent Additions (2025-2026)
-
-The bolded rows are new since the original 2023-2024 master list. Three concentrated trends:
-
-- **5G core (SBA) attacks went mainstream** — CoreCrisis (USENIX '25), CITesting (CCS '25), Hidden Paths (CCS '25). The core is now where the bugs are, equivalent to where web-app security was around 2010.
-- **Baseband emulation + over-the-air fuzzing converged** — Stateful Analysis, BaseBridge, LLFuzz, and FirmState (all 2025) closed the realism gap that bottlenecked Shannon/MediaTek emulation. Expect a fresh wave of modem CVEs through 2026.
-- **Real-deployment field studies** — *Small Cell, Big Risk* (NDSS '26) audited carrier-deployed femtocells; *Passive Multi-Target GUTI Identification* (NDSS '26) introduced cross-modal passive tracking using a camera + RF sniffer.
 
 ## Recent CVEs (2025-2026)
 

@@ -11,10 +11,14 @@ The Cell Radio Network Temporary Identifier (C-RNTI) is assigned to each UE duri
 
 **Ease of execution: 5/5** -- purely passive, no transmission, no extra hardware beyond a receive SDR.
 
-## Key Paper
+## Key References
 
-- **Reference:** arXiv 2409.17700, September 2024
-- **Finding:** C-RNTI values are visible in cleartext in 5G NR, enabling persistent tracking
+C-RNTI tracking is a well-established radio-layer privacy issue rather than a single-paper finding. The mechanism is documented in 3GPP itself and in multiple academic works:
+
+- **5GSniffer** ([spritelab/5GSniffer](https://github.com/spritelab/5GSniffer), Universitat Politècnica de Catalunya) — open-source 5G NR downlink decoder that extracts C-RNTI from PDCCH in real time. The associated paper at ACM ASIA CCS 2024 demonstrates per-UE tracking from PDCCH-only captures.
+- **NR-Scope** ([PrincetonUniversity/NR-Scope](https://github.com/PrincetonUniversity/NR-Scope)) — sister tool focused on 5G NR PDCCH/PDSCH analysis.
+
+> *Earlier attribution note:* this page previously cited *"Demystifying Privacy in 5G SA"* (arXiv 2409.17700, Borgaonkar et al.). On re-read, that paper documents **GUTI Reallocation** and **Security-Capabilities Bidding-Down** — not C-RNTI tracking — so the citation has been moved to the tools that actually implement and demonstrate C-RNTI tracking.
 
 ## How It Works
 
@@ -53,3 +57,9 @@ Both tools can decode PDCCH and extract C-RNTI values from live 5G NR signals.
 - C-RNTI randomization and frequent rotation (limited by 3GPP spec constraints)
 - Encrypting DCI (not in current 3GPP specifications)
 - Reducing C-RNTI lifetime through aggressive RRC release timers
+
+## RF Signature
+
+The attacker is purely passive — *attack-in-progress detection from RF + AI is impossible* (table value: `Neither`).
+
+A passive RF + AI sensor at the same vantage point as the attacker **can** answer the precondition question: *"how rotatable / linkable are the C-RNTIs this cell hands out?"* A defender can use 5GSniffer or NR-Scope to measure C-RNTI lifetime, rotation cadence, and DCI predictability per cell. That data feeds an exposure score for the operator's privacy posture — not an intrusion signal, but a meaningful audit signal.
