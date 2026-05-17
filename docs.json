@@ -48,7 +48,6 @@
         "pages": [
           "attacks/02-fake-base-station/overview",
           "attacks/02-fake-base-station/sib1-spoofing",
-          "attacks/02-fake-base-station/mitm-relay",
           "attacks/02-fake-base-station/cell-reselection",
           "attacks/02-fake-base-station/femtocells"
         ]
@@ -61,14 +60,7 @@
         ]
       },
       {
-        "group": "4. Signal Overshadowing",
-        "pages": [
-          "attacks/05-signal-overshadowing/overview",
-          "attacks/05-signal-overshadowing/5gone"
-        ]
-      },
-      {
-        "group": "5. Pre-Auth Injection",
+        "group": "4. Pre-Auth Injection",
         "pages": [
           "attacks/06-pre-auth-injection/overview",
           "attacks/06-pre-auth-injection/sni5gect",
@@ -77,19 +69,17 @@
         ]
       },
       {
-        "group": "6. Denial of Service",
+        "group": "5. Denial of Service",
         "pages": [
           "attacks/07-dos/overview",
           "attacks/07-dos/prach-jamming",
           "attacks/07-dos/rach-msg1-jamming",
           "attacks/07-dos/rrc-flood",
-          "attacks/07-dos/rrc-signaling-storm",
-          "attacks/07-dos/breaking-5g-lower-layer",
           "attacks/07-dos/amf-crash"
         ]
       },
       {
-        "group": "7. Protocol Fuzzing",
+        "group": "6. Protocol Fuzzing",
         "pages": [
           "attacks/10-fuzzing/overview",
           "attacks/10-fuzzing/ransacked",
@@ -100,7 +90,7 @@
         ]
       },
       {
-        "group": "8. Location Tracking",
+        "group": "7. Location Tracking",
         "pages": [
           "attacks/11-location-tracking/overview",
           "attacks/11-location-tracking/crnti-tracking",
@@ -108,20 +98,10 @@
         ]
       },
       {
-        "group": "9. Battery Drain",
-        "pages": [
-          "attacks/13-battery-drain/overview",
-          "attacks/13-battery-drain/mac-ce-spoofing"
-        ]
-      },
-      {
         "group": "Specialized",
         "pages": [
-          "attacks/14-20-specialized/network-slicing",
           "attacks/14-20-specialized/gtp-tunneling",
           "attacks/14-20-specialized/hidden-paths",
-          "attacks/14-20-specialized/sba-api",
-          "attacks/14-20-specialized/cross-service-token",
           "attacks/14-20-specialized/citesting",
           "attacks/14-20-specialized/oran-supply-chain"
         ]
