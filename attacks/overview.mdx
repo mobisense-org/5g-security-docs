@@ -133,23 +133,6 @@ The bolded rows are new since the original 2023-2024 master list. Three concentr
 | [CVE-2025-20753](https://nvd.nist.gov/vuln/detail/CVE-2025-20753) | MediaTek 5G modems (NR15/16, MT68xx, MT88xx) | MEDIUM (5.3) | DoS via uncaught exception — triggered when UE attaches to a rogue gNB |
 | [CVE-2025-15555](https://nvd.nist.gov/vuln/detail/CVE-2025-15555) | Open5GS ≤ 2.7.6 | HIGH (8.2) | Stack buffer overflow in VoLTE Cx-Test (HSS `hss_ogs_diam_cx_mar_cb`) |
 
-## Flagged Attacks (removed from the master table)
-
-These eight attacks were dropped from the catalog above because they fail our reproducibility bar: **no public code AND venue is an arXiv preprint** (i.e. not one of the conferences we trust to publish full architecture / setup / PoCs — USENIX, CSET, WiSec, NDSS, CCS, S&P). The papers may still be interesting reading, but they are not first-draft candidates for the lab.
-
-| Attack | Paper (short) | Venue | Date | Code | Reason |
-|---|---|---|---|---|---|
-| MITM relay gNB | Unprotected Low Layers | arXiv '24 | Mar 2024 | No | Pure preprint, no repo |
-| 5Gone (uplink) | 5Gone (Erni et al.) | arXiv '26 | Feb 2026 | No | Pure preprint, no repo |
-| RRC storm | RRC Signaling Storm | arXiv '25 | Apr 2025 | No | Pure preprint (OAI mods only) |
-| SIB1+TA DoS | Breaking 5G Lower Layer | arXiv '26 | Feb 2026 | B210 testbed | arXiv + testbed mention only |
-| MAC CE spoofing | Unprotected Low Layers | arXiv '24 | Mar 2024 | No | Pure preprint, no repo |
-| Rogue gNB slice | Integrity Under Siege | arXiv '25 | Nov 2025 | No | Pure preprint, no repo |
-| SBA-API (web) | Pen-Testing 5GC Web | arXiv '24 | 2024-2025 | Burp/ZAP only | arXiv + generic tools only |
-| Cross-Service Token | Cross-Service Token | arXiv '25 | Sep 2025 | No | Pure preprint, no repo |
-
-All other rows in the master table are clean — venues match our list (USENIX, CSET, WiSec) or are major conferences (NDSS, CCS, S&P) that publish full papers with architecture diagrams / setup instructions. Even rows with `No` in the Code column there are still reproducible from the paper itself.
-
 ## Events / Contests (where reproducible attacks land)
 
 Conferences and contests that consistently ship full setups, PoCs, or live testbeds — the kind of artifacts that make attacks reproducible in the lab.
