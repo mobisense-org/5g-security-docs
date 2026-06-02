@@ -1,64 +1,149 @@
 ---
 title: '5G to 2G Bidding-Down'
-description: 'Forcing a 5G UE to fall back to 2G/GSM where mutual authentication and strong ciphers are absent.'
+description: 'Forcing a 5G-SA UE down to 2G via unprotected pre-authentication NAS reject causes (Registration Reject #27 → TAU Reject #42), stripping mutual authentication and encryption. All 7 tested flagship phones were vulnerable.'
 ---
 
 <Info>
-**Ease: 3/5** | **Layer: NAS / RRC** | **Replicable: Yes** | **Extra HW: USRP B210, PA**
+**Replicable: 4/5** | **Layer: NAS pre-auth reject causes** (RRC redirect is secondary) | **Detect: Both** (strong RF signature) | **HW: SDR + srsRAN / Open5GS; Osmocom for the 2G leg**
 </Info>
+
+## Summary
+
+The "Downgrade Dance" walks a victim from 5G SA down to 2G one generation at a time, then intercepts on the 2G leg where mutual authentication and strong ciphering do not exist. Each step abuses an **unprotected NAS reject message** that the UE accepts *before* a security context is established: a 5G `Registration Reject` with cause **#27 (N1 mode not allowed)** disables the UE's 5G capability, then a 4G `Tracking Area Update Reject` with cause **#42 (Severe network failure)** makes it abandon 4G and camp on a 2G cell. In the WiSec '23 study, **all 7 commercial phones (5 baseband vendors) were downgraded successfully**. The attack is design-level — it exploits the fact that pre-authentication NAS traffic cannot be verified — so it is not "patchable" as a CVE; it persists until reject-after-auth is enforced or 2G is disabled.
 
 ## Paper
 
-| Field | Value |
+| Field | Details |
 |---|---|
 | **Title** | "Never Let Me Down Again: Bidding-Down Attacks and Mitigations in 5G and 4G" |
-| **Authors** | Holtrup Chlosta, Wiesinger, Peschla, Holz |
-| **Venue** | WiSec '23 |
-| **Date** | May 2023 |
-| **Source Code** | -- |
-| **Ease** | 3/5 |
-| **Layer** | NAS / RRC |
-| **Extra HW** | USRP B210, power amplifier |
+| **Authors** | Bedran Karakoc (Ruhr University Bochum), Nils Fürste (Software Radio Systems), David Rupprecht (Radix Security), Katharina Kohls (Radboud University) |
+| **Venue** | WiSec '23 — 16th ACM Conf. on Security and Privacy in Wireless and Mobile Networks, Guildford, UK, May 2023 |
+| **DOI** | [10.1145/3558482.3581774](https://dl.acm.org/doi/10.1145/3558482.3581774) |
+| **Scope** | First systematic classification of bidding-down attacks (intra- and inter-generation) + 24 new SCAS test cases |
+| **Evaluation** | 7 commercial phones, 4 core networks (Open5GS, OAI, free5GC, commercial), 3 public networks |
+| **Headline result** | Full 5G→2G downgrade works on **all 7** phones; null-encryption bidding-down (5G NSA) on a majority |
+| **Code** | No dedicated artifact released — built from srsRAN, Open5GS, Osmocom, CoreScope |
+| **Disclosure** | GSMA Coordinated Vulnerability Disclosure |
+
+## Threat Model
+
+| | |
+|---|---|
+| **Attacker** | Multi-RAT rogue base stations (fake 5G gNB + 4G eNB + 2G BTS) broadcasting the **operator's own PLMN** at higher signal strength; optionally a jammer on the legitimate cell |
+| **Victim** | Any 5G-SA-capable UE with 2G fallback enabled (the default on most phones) |
+| **Position** | Within radio range of the victim; must out-power the legit cell — by gain (lab) or by jamming the real carrier (field) |
+| **Capability** | Operate a cell on each RAT and send **unprotected pre-auth NAS Reject** messages with high-impact causes |
+| **Pre-auth?** | Yes — reject messages are accepted before the security context exists, so the UE cannot verify them |
+| **External requirement** | A 2G fallback path must exist (legit 2G coverage, or the attacker supplies the 2G cell) |
 
 ## Attack Mechanism
 
-The bidding-down attack forces a 5G-capable UE to connect via 2G (GSM), where mutual authentication does not exist and encryption is weak or absent. This effectively strips all 5G security improvements.
+The downgrade is **NAS-reject driven**, not RRC-redirect driven. In 5G, the UE is required to *ignore* a redirection field in a pre-authenticated `RRC Release` in any case, so the attacker instead exploits NAS reject causes that the UE obeys before authentication.
 
 ```
-1. Attacker sets up rogue gNB on the target 5G frequency
-2. UE connects to rogue gNB
-3. Rogue gNB sends RRC Release with redirectedCarrierInfo
-   pointing to a 2G (GSM) frequency
-4. UE obeys and tunes to the 2G frequency
-5. Attacker operates a 2G BTS (e.g., via OsmocomBB) on that frequency
-6. UE attaches to the 2G BTS — no mutual auth, weak/no encryption
-7. Attacker can now intercept calls, SMS, and data
+Victim on legit 5G-SA
+   │  attacker out-powers the legit cell (higher gain, or jams the real carrier)
+   ▼
+Fake 5G gNB  (same PLMN, stronger RSRP)
+   │  UE → NAS Registration Request
+   │  gNB → NAS Registration Reject, cause #27 "N1 mode not allowed"
+   ▼  UE disables 5G-SA capability, searches for 4G
+Fake 4G eNB  (same PLMN)
+   │  UE → NAS Attach / TAU Request
+   │  eNB → NAS TAU Reject, cause #42 "Severe network failure"
+   ▼  UE ignores all 4G cells of this PLMN, searches for 2G
+Fake 2G BTS  (same PLMN)
+   │  UE camps — no mutual authentication, weak/no GSM cipher
+   ▼  Interception of calls / SMS / data
 ```
 
-<Warning>
-This attack chain works even against 5G SA if the UE supports 2G fallback. Most commercial UEs still have GSM enabled by default.
-</Warning>
+### High-impact reject causes
 
-### Mitigation Status
-- Some operators have disabled 2G on the network side
-- Android 14+ provides a user toggle to disable 2G
-- iOS does not yet expose a 2G disable option to users
-- 3GPP has discussed inter-RAT redirect protections but nothing is mandatory
+The paper enumerates which causes actually move a UE versus merely cause a DoS:
+
+| Leg | Message (spec) | Cause | Effect | Result across 7 UEs |
+|---|---|---|---|---|
+| 5G→4G | Registration Reject (TS 24.501) | **#27 N1 mode not allowed** | Disables 5G-SA capability entirely | **Downgrade on all 7** (TC11) |
+| 5G→4G | Registration Reject | #7 5GS services not allowed | — | Downgrade 2, DoS 3 (TC12) |
+| 5G→4G | Registration Reject | #11 PLMN not allowed | — | Downgrade 1, DoS 1 (TC13) |
+| 4G→2G | TAU Reject (TS 24.301) | **#42 Severe network failure** | UE ignores all 4G cells of the PLMN | **Downgrade on all 7** (TC14) — *new cause identified by this paper* |
+| 4G→2G | TAU Reject | #7 EPS services not allowed | — | Downgrade 3 (TC15) |
+| 4G→2G | TAU Reject | #8 EPS + non-EPS not allowed | — | DoS 5 (TC16) |
+
+Cause **#42** is the paper's notable contribution — it triggers the 4G→2G drop more reliably than the reject causes used in prior work, and was previously untested. The `RRC Release` redirection (`redirectedCarrierInfo`) is a **complementary** vector usable on the 4G→2G leg when the operator omits the GERAN-redirect policy bit, but it is *not* what carries the 5G→4G step.
+
+## Affected Devices
+
+All seven phones — spanning five baseband vendors — were downgraded from 5G to 2G (ATK1):
+
+| Phone | Baseband | 5G→2G downgrade |
+|---|---|---|
+| Samsung Galaxy S22 | Samsung Exynos | ✓ |
+| Google Pixel 6 Pro | Samsung Exynos | ✓ |
+| iPhone SE 2022 | Qualcomm | ✓ |
+| OnePlus 10 Pro | Qualcomm | ✓ |
+| Huawei P40 Pro 5G | HiSilicon (Kirin) | ✓ |
+| Hisense F50+ | UNISOC | ✓ |
+| Samsung Galaxy A22 5G | MediaTek | ✓ |
+
+Because the 5G→4G→2G chain rides on protocol design (unverifiable pre-auth NAS), the result is **vendor-independent for the downgrade itself** — unlike the intra-generation tests in the paper, where outcomes varied by baseband vendor.
 
 ## Replication
 
-| Component | Requirement |
-|---|---|
-| SDR (5G side) | USRP B210 — rogue gNB for initial lure |
-| SDR (2G side) | BladeRF or USRP B200 — for 2G BTS |
-| Software (5G) | srsRAN gNB or OAI gNB (RRC Release injection) |
-| Software (2G) | OsmocomBB + OsmoBTS |
-| Amplifier | PA on the 5G side for cell reselection |
+**What the paper used:** a modified **Open5GS** core + **srsENB/srsRAN** gNB/eNB, **USRP B210 / X300** SDRs, **srsUE** and **CoreScope** (srsRAN's RF-free core tester), and **SCAT + srsUE** on a rooted phone for the public-network tests. This is almost exactly your bench.
+
+**In your lab — the 5G→4G leg is the easy, high-value reproduction (~4–5/5):**
+
+1. Stand up the legit cell: **srsRAN gNB + Open5GS**, your provisioned SIM phones camped on 5G SA.
+2. Bring up a **second srsRAN gNB as the fake 5G cell** on the same PLMN at higher gain (a B210 is plenty; raise gain to win reselection in a cabled/attenuated setup).
+3. On the fake side, make the AMF answer the incoming `Registration Request` with **`Registration Reject`, 5GMM cause #27**. The cleanest path is to patch Open5GS's AMF reject handler (or a minimal fake-gNB NAS responder) to emit cause #27.
+4. Observe the UE **disable 5G-SA and reselect 4G** within seconds. That is the core, fully reproducible result.
+
+**Full 5G→2G dance (~3/5):** add a **4G leg** (srsRAN srseNB + Open5GS EPC) that replies to the `TAU/Attach Request` with **EMM cause #42**, and a **2G leg** using **Osmocom** (OsmoBTS + OsmoBSC + OsmoMSC) or **YateBTS** on a spare B210. Drive the cascade by gain manipulation (lab) or by jamming the legit carrier (field). The 2G stack is the only piece not already in your toolchain.
+
+<Warning>
+The 2G BTS and any jamming are **heavily regulated**. Run the whole chain **conducted (cabled + attenuators) or inside a shielded enclosure** on test SIMs only — the same constraint the authors describe for their shielded environment.
+</Warning>
 
 <Tip>
-Test with a UE that has 2G explicitly enabled in settings. Many newer UEs allow disabling 2G via "Settings > Network > Allow 2G" toggle.
+For a passive-RF **detection** thesis you do not need the 2G leg working end-to-end. The detectable evidence — the same-PLMN rogue cell, the pre-auth reject causes, and the RAT cascade — is all generated by the 5G→4G step, which you can reproduce entirely with srsRAN + Open5GS + your phones.
 </Tip>
 
+## RF Signature (passive RF + AI)
+
+`Detect = Both`, and the on-air evidence is unusually rich — this is one of the stronger downgrade signatures for a passive sniffer:
+
+- **Twin cell on the operator's PLMN at higher RSRP** on an unexpected PCI / ARFCN — the classic fake-BS tell, flagged against a baseline of legitimate PCIs.
+- **Unprotected pre-authentication NAS Reject carrying a high-impact cause** — `Registration Reject #27/#7/#11` or `TAU Reject #42/#7/#8` — sent immediately after a `Registration`/`Attach` request, with no security header and no integrity. Legitimate networks essentially never send these causes pre-auth; this single field is a near-deterministic indicator.
+- **A RAT-downgrade cascade for one subscriber**: 5G registration → reject → 4G attach → reject → 2G camp, all within seconds. The descending-RAT re-registration sequence is a strong temporal pattern.
+- **Optional corroboration**: wideband interference on the legit 5G ARFCN (jamming) coincident with the rogue cell, and the anomalous appearance of a 2G/GSM cell in a 5G-only area.
+
+**AI angle:** a sequence classifier over `(cell-appearance events + SIB fingerprint + NAS reject cause + RAT transitions)` cleanly separates a downgrade dance from benign mobility or a legitimate inter-RAT handover. The pre-auth **reject-cause field is the highest-signal single feature** and is readable by any NAS-aware downlink sniffer.
+
+<Note>
+A 5G/4G sniffer observes the *setup* (rogue cell + rejects + cascade), which is sufficient to alarm. Observing the *final interception* on the 2G leg requires a separate GSM-capable receiver — but detection does not need it.
+</Note>
+
+## Detection & Mitigation
+
+**UE / OS side**
+- **Disable 2G** — Android 14+ exposes an "Allow 2G" toggle; turning it off breaks the final leg outright. iOS does not yet expose this to users.
+- A UE that receives a pre-auth `Registration Reject` cause 27 from a same-PLMN cell which then disappears is behaving suspiciously and could self-flag.
+
+**Operator side**
+- **Set the GERAN-redirect policy bit** — TS 24.301 §9.9.3.52 "Unsecured redirection to GERAN not allowed" blocks the 4G→2G RRC redirect. *No operator the authors tested had enabled it.*
+- Watch for registration→reject storms and sudden RAT-distribution shifts (mass drop to 2G) within a cell.
+
+**Specification (authors' proposal)**
+- Accept **high-impact NAS reject causes only after authentication** — the root fix.
+- Reject the connection on a `HashMME`/`HashUE` mismatch; tighten replay and Initial-NAS-message protection.
+
 ## References
-1. Chlosta et al. "Never Let Me Down Again." WiSec '23.
-2. 3GPP TS 38.331 (RRC Release redirectedCarrierInfo)
+
+1. B. Karakoc, N. Fürste, D. Rupprecht, K. Kohls, "Never Let Me Down Again: Bidding-Down Attacks and Mitigations in 5G and 4G," **WiSec '23**. [DOI 10.1145/3558482.3581774](https://dl.acm.org/doi/10.1145/3558482.3581774).
+2. 3GPP TS 24.501 — 5GMM reject causes (incl. #27 N1 mode not allowed).
+3. 3GPP TS 24.301 — EMM reject causes (incl. #42 Severe network failure) and the GERAN-redirect policy bit (§9.9.3.52).
+4. 3GPP TS 33.501 — 5G security architecture (ABBA, security context establishment).
+5. Tooling: [srsRAN](https://github.com/srsran), [Open5GS](https://github.com/open5gs/open5gs), [Osmocom](https://osmocom.org/) (2G), [CoreScope](https://github.com/srsran/corescope).
+</content>
+</invoke>
