@@ -98,6 +98,15 @@
         ]
       },
       {
+        "group": "8. Overshadowing",
+        "pages": [
+          "attacks/12-overshadowing/overview",
+          "attacks/12-overshadowing/sigover",
+          "attacks/12-overshadowing/adaptover",
+          "attacks/12-overshadowing/5gone"
+        ]
+      },
+      {
         "group": "Specialized",
         "pages": [
           "attacks/14-20-specialized/gtp-tunneling",

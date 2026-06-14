@@ -1,0 +1,67 @@
+---
+title: '5Gone (Uplink Overshadowing in 5G-SA)'
+description: 'Uplink overshadowing of Msg3 / Registration at the gNB in 5G Stand-Alone — cell-wide DoS, LTE downgrade, and SUCI extraction/replay.'
+---
+
+<Info>
+**Ease: 2/5** | **Layer: MAC / RRC / NAS pre-auth (uplink)** | **Replicable: Hard (traces only)** | **Extra HW: USRP, tight uplink sync**
+</Info>
+
+## Paper
+
+| Field | Value |
+|---|---|
+| **Title** | "5Gone: Uplink Overshadowing Attacks in 5G-SA" |
+| **Authors** | Erni, Kotuliak, Roeschlin, Baker, Capkun (ETH Zurich + Oxford) |
+| **Venue** | arXiv '26 (preprint) |
+| **Date** | February 2026 |
+| **Paper** | [arXiv 2602.10272](https://arxiv.org/abs/2602.10272) |
+| **Source Code** | -- (traces only as of mid-2026) |
+| **Direction** | Uplink |
+
+## Attack Mechanism
+
+5Gone moves overshadowing into **5G Stand-Alone** and onto the **uplink** — overshadowing the messages a UE sends *to the gNB* during random access and registration, rather than the downlink the UE receives. The attacker aligns to the uplink grant and overshadows Msg3 / the Registration Request as the gNB decodes it.
+
+```
+1. Synchronize to the target 5G-SA cell (uplink timing / grant structure)
+2. Wait for a victim's random-access / registration attempt
+3. Overshadow the uplink message (Msg3 / Registration) at the gNB:
+   - Replace it with a crafted pre-auth message
+   - Or corrupt it to deny the procedure
+4. The gNB acts on the attacker-controlled uplink content
+```
+
+Because it targets what the **gNB** receives, a single uplink overshadowing transmitter can affect the random-access channel for the whole cell.
+
+## What It Enables
+
+- **Cell-wide DoS** — overshadowing Msg3 / Registration denies random access to UEs in the cell.
+- **LTE downgrade** — push UEs off 5G-SA toward less-protected fallback.
+- **SUCI extraction / replay** — manipulate the pre-auth identity exchange to harvest or replay the SUCI.
+
+<Warning>
+Uplink overshadowing is harder than downlink: the attacker must align to the uplink grant and reach the gNB's receiver with the right power, which is why this row is rated 2/5 for replicability. As of mid-2026 only traces are public, not a full toolkit.
+</Warning>
+
+## Replication
+
+| Component | Requirement |
+|---|---|
+| SDR | USRP with accurate uplink timing alignment to the gNB |
+| Sync | Tight synchronization to the cell's uplink grant structure (the limiting factor) |
+| Target | A 5G-SA gNB (e.g. srsRAN/OAI) for lab evaluation |
+| Status | Paper + traces only; expect to rebuild the uplink overshadowing pipeline |
+
+## RF Signature
+
+`RF AI` — the attack transmits on the uplink during random access, so a passive RF + AI sensor positioned near the gNB can observe overshadowed Msg3/Registration occasions: duplicated/colliding uplink transmissions on PRACH/PUSCH resources with anomalous power and decoding inconsistencies, correlated with registration failures across multiple UEs.
+
+## How It Relates to Other Attacks
+
+- 5G-SA, uplink-focused evolution of [AdaptOver](/attacks/12-overshadowing/adaptover) (LTE, DL+UL) and [SigOver](/attacks/12-overshadowing/sigover) (LTE, DL broadcast) — same ETH Zurich overshadowing lineage.
+- Overlaps in outcome with uplink jamming ([PRACH](/attacks/07-dos/prach-jamming) / [RACH Msg1](/attacks/07-dos/rach-msg1-jamming)) but is message-precise rather than blind jamming.
+
+## References
+
+1. S. Erni, M. Kotuliak, M. Roeschlin, R. Baker, S. Capkun. "5Gone: Uplink Overshadowing Attacks in 5G-SA." [arXiv 2602.10272](https://arxiv.org/abs/2602.10272), 2026.

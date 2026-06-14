@@ -1,0 +1,42 @@
+---
+title: 'Overview'
+description: 'Signal overshadowing — injecting spoofed broadcast/control messages over the air without a rogue cell, by transmitting a time/frequency-aligned signal a few dB stronger than the legitimate one.'
+---
+
+## What Overshadowing Is
+
+Overshadowing sits between passive sniffing and a full rogue gNB. The attacker does **not** stand up a fake cell; instead it transmits a signal that is precisely time- and frequency-aligned with the legitimate downlink (or uplink) and only a few dB stronger, so the victim's receiver locks onto the attacker's symbols for a *specific* message while everything else still comes from the real network. Because LTE/5G broadcast and pre-authentication control messages are not integrity-protected, the overshadowed message is accepted as genuine.
+
+This makes overshadowing stealthier and lower-power than a rogue cell, but it requires tight synchronization to the target cell.
+
+## Sub-Attacks
+
+<CardGroup cols={2}>
+  <Card title="SigOver" icon="tower-broadcast" href="/attacks/12-overshadowing/sigover">
+    The original LTE signal-overshadowing attack (USENIX '19). Overshadows broadcast system info / paging with ~3 dB advantage, no rogue cell.
+  </Card>
+  <Card title="AdaptOver" icon="arrows-rotate" href="/attacks/12-overshadowing/adaptover">
+    Reactive DL+UL overshadowing of NAS messages (MobiCom '22) → persistent DoS and IMSI extraction.
+  </Card>
+  <Card title="5Gone" icon="signal-stream" href="/attacks/12-overshadowing/5gone">
+    Uplink overshadowing of Msg3 / Registration at the gNB in 5G-SA (arXiv '26) → cell-wide DoS, downgrade, SUCI extraction.
+  </Card>
+</CardGroup>
+
+## Summary Table
+
+| Sub-Attack | Paper | Venue | Date | Code | Direction | Repl. |
+|---|---|---|---|---|---|---|
+| SigOver | "Hiding in Plain Signal" (Yang et al.) | USENIX '19 | Aug 2019 | [sigover_injector](https://github.com/SysSec-KAIST/sigover_injector) | Downlink | 4/5 |
+| AdaptOver | "AdaptOver" (Erni et al.) | MobiCom '22 | Oct 2022 | -- | DL + UL | 3/5 |
+| 5Gone | "5Gone" (Erni et al.) | arXiv '26 | Feb 2026 | -- (traces only) | Uplink | 2/5 |
+
+## Key References
+
+1. H. Yang, S. Bae, M. Son, H. Kim, S. M. Kim, Y. Kim. **"Hiding in Plain Signal: Physical Signal Overshadowing Attack on LTE."** USENIX Security '19. [Paper](https://www.usenix.org/conference/usenixsecurity19/presentation/yang-hojoon).
+2. S. Erni, M. Kotuliak, P. Leu, M. Roeschlin, S. Capkun. **"AdaptOver: Adaptive Overshadowing Attacks in Cellular Networks."** ACM MobiCom '22. [DOI 10.1145/3495243.3560525](https://dl.acm.org/doi/10.1145/3495243.3560525) · [arXiv 2106.05039](https://arxiv.org/abs/2106.05039).
+3. S. Erni et al. **"5Gone: Uplink Overshadowing Attacks in 5G-SA."** [arXiv 2602.10272](https://arxiv.org/abs/2602.10272), 2026.
+
+## Why It Matters for Passive-RF Detection
+
+Overshadowing leaves a distinctive radio fingerprint: two time-aligned copies of the same message with a small power offset, brief constellation/EVM anomalies, and inconsistent CRC/decoding across receivers. Unlike a rogue gNB (a whole new cell appears) or passive sniffing (nothing transmits), the overshadowing transmitter *is* on the air during the attack — which is exactly what a passive RF + AI sensor is positioned to catch. This is why all three rows are marked `RF AI` / `Active RF` in the master table.
