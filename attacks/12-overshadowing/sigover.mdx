@@ -1,0 +1,68 @@
+---
+title: 'SigOver (Signal Overshadowing)'
+description: 'The original LTE signal-overshadowing attack — inject spoofed broadcast/control messages over the air with a few dB power advantage and no rogue cell.'
+---
+
+<Info>
+**Ease: 4/5** | **Layer: PHY / broadcast (MIB/SIB/paging)** | **Replicable: Yes** | **Extra HW: USRP (B210/X310), GPSDO for sync**
+</Info>
+
+## Paper
+
+| Field | Value |
+|---|---|
+| **Title** | "Hiding in Plain Signal: Physical Signal Overshadowing Attack on LTE" |
+| **Authors** | Yang, Bae, Son, Kim, Kim, Kim (KAIST) |
+| **Venue** | USENIX Security '19 (pp. 55-72) |
+| **Date** | August 2019 |
+| **Paper** | [usenix.org/.../yang-hojoon](https://www.usenix.org/conference/usenixsecurity19/presentation/yang-hojoon) |
+| **Source Code** | [SysSec-KAIST/sigover_injector](https://github.com/SysSec-KAIST/sigover_injector) |
+| **Direction** | Downlink |
+
+## Attack Mechanism
+
+SigOver transmits an OFDM signal that is synchronized to the target LTE cell in time and frequency, carrying a spoofed version of a *specific* downlink message (e.g. a SIB, MIB, or paging record). With roughly a **3 dB** power advantage over the legitimate signal at the victim, the UE decodes the attacker's symbols for that message while continuing to receive everything else from the real eNB.
+
+```
+1. Sniff and lock onto the target cell (PCI, frequency, frame timing)
+2. Achieve symbol-level synchronization (GPSDO / shared clock)
+3. Craft the spoofed message (SIB1/SIB2, MIB, or paging)
+4. Transmit the overshadowing signal ~3 dB above the legitimate one,
+   aligned to the exact subframe/RE positions of the target message
+5. Victim decodes the spoofed message as authentic (no rogue cell present)
+```
+
+Because the attack is per-message rather than a whole fake cell, it is harder to spot than a rogue gNB and uses far less power.
+
+## What It Enables
+
+- **Denial of service** — spoofed system info / barring → UE cannot access the cell.
+- **Downgrade** — manipulate broadcast capabilities to push fallback.
+- **Tracking / paging manipulation** — inject crafted paging.
+
+<Warning>
+SigOver targets LTE broadcast and control messages that are not integrity-protected. The same physical-layer technique generalizes to 5G NR broadcast info — see [AdaptOver](/attacks/12-overshadowing/adaptover) (NAS, DL+UL) and [5Gone](/attacks/12-overshadowing/5gone) (5G uplink).
+</Warning>
+
+## Replication
+
+| Component | Requirement |
+|---|---|
+| SDR | USRP B210 (or X310 for headroom) |
+| Sync | GPSDO / external 10 MHz + PPS for symbol-level alignment to the target cell |
+| Software | [sigover_injector](https://github.com/SysSec-KAIST/sigover_injector) (open source) |
+| Test UE | COTS LTE phone + test SIM |
+| Shielding | RF shielded box for lawful lab testing |
+
+<Tip>
+The hard part is synchronization, not power. Lock onto the cell's timing first; the required power advantage over the legitimate signal is only a few dB.
+</Tip>
+
+## RF Signature
+
+Overshadowing is **detectable on passive RF + AI** (`RF AI`): during the attack there are two time-aligned copies of the same message with a small power offset, producing EVM/constellation anomalies and receiver-dependent CRC inconsistencies on the affected resource elements. A passive sensor in coverage can flag this without any operator-side telemetry.
+
+## References
+
+1. H. Yang, S. Bae, M. Son, H. Kim, S. M. Kim, Y. Kim. "Hiding in Plain Signal: Physical Signal Overshadowing Attack on LTE." [USENIX Security '19](https://www.usenix.org/conference/usenixsecurity19/presentation/yang-hojoon).
+2. Code: [SysSec-KAIST/sigover_injector](https://github.com/SysSec-KAIST/sigover_injector).

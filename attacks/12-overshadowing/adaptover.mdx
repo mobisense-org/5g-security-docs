@@ -1,0 +1,63 @@
+---
+title: 'AdaptOver (Adaptive Overshadowing)'
+description: 'Reactive downlink + uplink overshadowing of NAS messages in LTE — persistent denial of service and IMSI extraction without a rogue cell.'
+---
+
+<Info>
+**Ease: 3/5** | **Layer: NAS (reactive)** | **Replicable: Research-grade** | **Extra HW: USRP, low-latency sync + processing**
+</Info>
+
+## Paper
+
+| Field | Value |
+|---|---|
+| **Title** | "AdaptOver: Adaptive Overshadowing Attacks in Cellular Networks" |
+| **Authors** | Erni, Kotuliak, Leu, Roeschlin, Capkun (ETH Zurich) |
+| **Venue** | ACM MobiCom '22 |
+| **Date** | October 2022 |
+| **Paper** | [DOI 10.1145/3495243.3560525](https://dl.acm.org/doi/10.1145/3495243.3560525) · [arXiv 2106.05039](https://arxiv.org/abs/2106.05039) |
+| **Source Code** | -- |
+| **Direction** | Downlink **and** Uplink |
+
+## Attack Mechanism
+
+AdaptOver extends [SigOver](/attacks/12-overshadowing/sigover) from static broadcast overshadowing to **reactive, bidirectional** overshadowing of NAS-layer messages. The attacker observes the ongoing exchange and, in real time, overshadows the next message on the downlink or uplink with a crafted replacement.
+
+```
+1. Synchronize to the target cell (timing, frequency)
+2. Monitor the live NAS exchange between UE and network
+3. Reactively overshadow a targeted message, e.g.:
+   - Attach Reject / Service Reject (DL) → persistent DoS
+   - Identity Request (DL) → solicit the IMSI
+   - Uplink responses → manipulate what the network sees
+4. Inject the spoofed message in the same subframe, a few dB stronger
+```
+
+The adaptivity is the novelty: because it reacts to the actual procedure state, AdaptOver can drive the UE into a **persistent** denial-of-service state (the UE keeps retrying and keeps getting overshadowed rejects) and can extract the **IMSI** by overshadowing an Identity Request — all without ever standing up a fake base station.
+
+## What It Enables
+
+- **Persistent DoS** — repeated overshadowed Attach/Service Reject keeps the UE off the network across retries.
+- **IMSI extraction** — overshadowed Identity Request elicits a plaintext IMSI on LTE.
+- **Procedure manipulation** — reactive control of either side of the NAS exchange.
+
+## Replication
+
+| Component | Requirement |
+|---|---|
+| SDR | USRP (B210 / X310) with a low-latency host pipeline |
+| Sync | Symbol-level synchronization to the target cell |
+| Processing | Real-time decode → decide → re-transmit loop (the reactive part is the engineering challenge) |
+| Test UE | COTS LTE phone + test SIM |
+
+<Note>
+No public code was released for AdaptOver, so replication means rebuilding the reactive overshadowing pipeline from the paper. The [arXiv version](https://arxiv.org/abs/2106.05039) documents the timing budget and message templates.
+</Note>
+
+## RF Signature
+
+`RF AI` — like all overshadowing, the attack transmits during the exchange, leaving time-aligned duplicate NAS messages with a power offset. The reactive nature adds a tell: overshadowing bursts are tightly correlated in time with specific NAS procedure steps (Identity Request, Attach/Service Reject), which a passive RF + AI sensor can learn to flag.
+
+## References
+
+1. S. Erni, M. Kotuliak, P. Leu, M. Roeschlin, S. Capkun. "AdaptOver: Adaptive Overshadowing Attacks in Cellular Networks." [ACM MobiCom '22](https://dl.acm.org/doi/10.1145/3495243.3560525) · [arXiv 2106.05039](https://arxiv.org/abs/2106.05039).
